@@ -1,0 +1,807 @@
+"""Secciones UI de admisión. Extraído de views/admision.py."""
+
+from __future__ import annotations
+
+import base64
+import io
+from datetime import date
+
+import streamlit as st
+
+from core.app_logging import log_event
+from core.alert_toasts import queue_toast
+from core.database import guardar_datos, obtener_estado_guardado
+from core.view_helpers import lista_plegable
+from core.utils import (
+    ahora,
+    asegurar_detalles_pacientes_en_sesion,
+    mapa_detalles_pacientes,
+    mostrar_dataframe_con_scroll,
+    registrar_auditoria_legal,
+    seleccionar_limite_registros,
+)
+from views._admision_utils import (
+    _buscar_coincidencias_legajo,
+    _dataframe_pacientes,
+    _eliminar_referencias_paciente,
+    _listar_pacientes_gestion,
+    _nombre_legible,
+    _normalizar_dni,
+    _paciente_id,
+    _parsear_fecha_guardada,
+    _renombrar_referencias_paciente,
+    _resumen_impacto_paciente,
+    _sincronizar_alta_paciente_best_effort,
+    _sincronizar_edicion_paciente_sql_best_effort,
+    _sincronizar_eliminacion_paciente_sql_best_effort,
+    _texto_unilinea,
+    _validar_legajo,
+)
+
+DB_LABELS = {
+    "vitales_db": "Signos vitales",
+    "indicaciones_db": "Recetas e indicaciones",
+    "evoluciones_db": "Evoluciones",
+    "balance_db": "Balance",
+    "pediatria_db": "Pediatria",
+    "fotos_heridas_db": "Fotos de heridas",
+    "consumos_db": "Materiales",
+    "estudios_db": "Estudios",
+    "administracion_med_db": "Administracion medicacion",
+    "consentimientos_db": "Consentimientos",
+    "emergencias_db": "Emergencias",
+    "cuidados_enfermeria_db": "Cuidados de enfermeria",
+    "escalas_clinicas_db": "Escalas clinicas",
+    "auditoria_legal_db": "Auditoria legal",
+    "facturacion_db": "Caja y facturacion",
+    "firmas_tactiles_db": "Firmas",
+    "plantillas_whatsapp_db": "Plantillas WhatsApp",
+}
+
+
+def _procesar_foto_alta(uploaded_file) -> str:
+    """Procesa foto: redimensiona manteniendo aspecto (max 200px), devuelve base64.
+    Soporta JPG, PNG, WEBP, GIF, BMP."""
+    if uploaded_file is None:
+        return ""
+    try:
+        from PIL import Image
+        img = Image.open(uploaded_file)
+        fmt = img.format or "JPEG"
+        if fmt.upper() in ("PNG", "WEBP", "GIF") and img.mode in ("RGBA", "P", "PA"):
+            bg = Image.new("RGB", img.size, (255, 255, 255))
+            if img.mode == "RGBA":
+                bg.paste(img, mask=img.split()[3])
+            else:
+                bg.paste(img)
+            img = bg
+        elif img.mode not in ("RGB", "L"):
+            img = img.convert("RGB")
+        img.thumbnail((200, 200))
+        save_fmt = "PNG" if fmt.upper() == "PNG" else "JPEG"
+        buf = io.BytesIO()
+        img.save(buf, format=save_fmt, optimize=True, quality=80)
+        return base64.b64encode(buf.getvalue()).decode("utf-8")
+    except Exception:
+        return ""
+
+
+def _img_mime(base64_str: str) -> str:
+    """Detecta MIME type de una imagen en base64 por su header."""
+    if not base64_str:
+        return "image/jpeg"
+    if base64_str.startswith("iVBOR"):
+        return "image/png"
+    if base64_str.startswith("R0lG"):
+        return "image/gif"
+    return "image/jpeg"
+
+
+def _render_admision_gestion(mi_empresa, rol, admin_total):
+    """Sección: Corregir o eliminar legajo."""
+    from core.ui_liviano import headers_sugieren_equipo_liviano
+    es_movil = headers_sugieren_equipo_liviano() or st.session_state.get("mc_liviano_modo") == "on"
+
+    st.markdown("## Corregir o eliminar legajo")
+    st.caption(
+        "Esta seccion esta arriba: busca el paciente y edita el legajo. "
+        + (
+            "Tambien podes eliminar un legajo cargado por error (abajo en esta misma seccion). El alta de pacientes nuevos esta mas abajo."
+            if admin_total
+            else "Para **dar de alta**, en el formulario de edicion cambia el campo **Estado** a **De Alta** y guarda."
+        )
+    )
+
+    if admin_total:
+        st.info(
+            "Corregi un typo en el nombre, el DNI mal cargado, telefono u obra social, o **elimina** el legajo si se creo por error. "
+            "Al guardar cambios de nombre/DNI, el sistema actualiza las referencias en agenda, visitas, historia, etc. "
+            "Al eliminar, se borra el legajo y los registros vinculados (accion irreversible)."
+        )
+    else:
+        st.info(
+            "Con **Guardar cambios del legajo** actualizas datos y el **estado** del paciente. "
+            "**De Alta** archiva el legajo en la lista habitual (coordinacion puede volver a mostrarlo con **Incluir altas**)."
+        )
+    st.markdown("##### Gestion de pacientes por clinica")
+    if not es_movil:
+        col_f1, col_f2 = st.columns([2.2, 1])
+    else:
+        col_f1 = st.container()
+        col_f2 = st.container()
+    buscar_gestion = col_f1.text_input(
+        "Buscar en legajos cargados",
+        placeholder="Nombre, DNI, obra social, clinica o estado",
+        key="adm_buscar_gestion",
+    )
+    incluir_altas = col_f2.checkbox("Incluir altas", key="adm_incluir_altas")
+
+    empresa_filtro = ""
+    if admin_total:
+        empresas_disponibles = sorted(
+            {
+                str(det.get("empresa", "") or "").strip()
+                for det in mapa_detalles_pacientes(st.session_state).values()
+                if str(det.get("empresa", "") or "").strip()
+            }
+        )
+        opciones_empresa = ["Todas las clinicas"] + empresas_disponibles
+        empresa_sel = st.selectbox("Filtrar por clinica", opciones_empresa, key="adm_empresa_filtro")
+        if empresa_sel != "Todas las clinicas":
+            empresa_filtro = empresa_sel
+
+    pacientes_gestion = _listar_pacientes_gestion(
+        mi_empresa,
+        rol,
+        busqueda=buscar_gestion,
+        incluir_altas=incluir_altas,
+        empresa_filtro=empresa_filtro,
+    )
+
+    if not es_movil:
+        col_m1, col_m2, col_m3 = st.columns(3)
+    else:
+        col_m1 = st.container()
+        col_m2 = st.container()
+        col_m3 = st.container()
+    col_m1.metric("Pacientes visibles", len(pacientes_gestion))
+    col_m2.metric("Activos", sum(1 for item in pacientes_gestion if item["estado"] == "Activo"))
+    col_m3.metric("No activos", sum(1 for item in pacientes_gestion if item["estado"] != "Activo"))
+
+    if pacientes_gestion:
+        limite = seleccionar_limite_registros(
+            "Pacientes a mostrar en la lista",
+            len(pacientes_gestion),
+            key="adm_limite_pacientes",
+            default=30,
+            opciones=(10, 20, 30, 50, 100, 200, 500),
+        )
+        with lista_plegable("Vista tabular de legajos", count=min(limite, len(pacientes_gestion)), expanded=False, height=440):
+            mostrar_dataframe_con_scroll(_dataframe_pacientes(pacientes_gestion[:limite]), height=400)
+
+        _SEL_PLACEHOLDER = "__seleccionar__"
+        opciones_pacientes = [_SEL_PLACEHOLDER] + [item["id"] for item in pacientes_gestion]
+        pacientes_gestion_map = {item["id"]: item for item in pacientes_gestion}
+        _dm_edicion = mapa_detalles_pacientes(st.session_state)
+        paciente_sel_admin = st.selectbox(
+            "Seleccionar paciente para editar o eliminar",
+            opciones_pacientes,
+            index=0,
+            format_func=lambda item, dm=_dm_edicion, gm=pacientes_gestion_map: (
+                "— Seleccionar paciente —"
+                if item == _SEL_PLACEHOLDER else
+                f"{_nombre_legible(item)} | DNI {(dm.get(item) or gm.get(item, {})).get('dni', 'S/D')} | "
+                f"{(dm.get(item) or gm.get(item, {})).get('empresa', 'S/D')} | "
+                f"{(dm.get(item) or gm.get(item, {})).get('estado', 'Activo')}"
+            ),
+            key="adm_paciente_edicion",
+        )
+
+        if paciente_sel_admin == _SEL_PLACEHOLDER:
+            st.info("Seleccione un paciente de la lista para editar o eliminar.")
+        else:
+            detalle_sel = dict(mapa_detalles_pacientes(st.session_state).get(paciente_sel_admin, {}))
+            if not detalle_sel and paciente_sel_admin in pacientes_gestion_map:
+                item_sel = pacientes_gestion_map[paciente_sel_admin]
+                detalle_sel = {
+                    "dni": item_sel.get("dni", ""),
+                    "empresa": item_sel.get("empresa", ""),
+                    "estado": item_sel.get("estado", "Activo"),
+                    "obra_social": item_sel.get("obra_social", ""),
+                    "telefono": item_sel.get("telefono", ""),
+                    "direccion": item_sel.get("direccion", ""),
+                }
+            impacto_actual = _resumen_impacto_paciente(paciente_sel_admin)
+            total_impacto = sum(impacto_actual.values())
+
+            with st.expander("Editar legajo seleccionado", expanded=False):
+                if impacto_actual:
+                    texto_impacto = " | ".join(
+                        f"{DB_LABELS.get(clave, clave)}: {cantidad}" for clave, cantidad in list(impacto_actual.items())[:6]
+                    )
+                    st.caption(f"Registros vinculados detectados: {total_impacto}. {texto_impacto}")
+                else:
+                    st.caption("Este legajo todavia no tiene registros clinicos vinculados.")
+
+                estado_actual = detalle_sel.get("estado", "Activo") or "Activo"
+                estados_disponibles = ["Activo", "De Alta"]
+                if estado_actual not in estados_disponibles:
+                    estados_disponibles.append(estado_actual)
+
+                with st.form("adm_edit_form"):
+                    with st.expander("Datos personales", expanded=False):
+                        if not es_movil:
+                            col_foto_e, col_campos_e = st.columns([1, 3])
+                        else:
+                            col_foto_e = st.container()
+                            col_campos_e = st.container()
+                        with col_foto_e:
+                            foto_edit = st.file_uploader("Foto de perfil", type=["jpg", "jpeg", "png", "webp", "gif", "bmp"],
+                                                          key="adm_foto_edit", label_visibility="collapsed")
+                            if detalle_sel.get("foto_perfil"):
+                                st.markdown(
+                                    f'<img src="data:{_img_mime(detalle_sel.get("foto_perfil", ""))};base64,{detalle_sel["foto_perfil"]}" '
+                                    f'style="width:80px;height:80px;border-radius:50%;object-fit:cover;'
+                                    f'border:2px solid rgba(20,184,166,0.3);margin-top:4px;">',
+                                    unsafe_allow_html=True,
+                                )
+                        with col_campos_e:
+                            if not es_movil:
+                                col_e1, col_e2 = st.columns(2)
+                            else:
+                                col_e1 = st.container()
+                                col_e2 = st.container()
+                            nombre_edit = col_e1.text_input("Nombre y apellido *", value=_nombre_legible(paciente_sel_admin))
+                            dni_edit = col_e2.text_input("DNI del paciente *", value=detalle_sel.get("dni", ""))
+                            if not es_movil:
+                                col_e3, col_e4 = st.columns(2)
+                            else:
+                                col_e3 = st.container()
+                                col_e4 = st.container()
+                            fnac_edit = col_e3.date_input(
+                                "Fecha de nacimiento",
+                                value=_parsear_fecha_guardada(detalle_sel.get("fnac", "")),
+                                min_value=date(1900, 1, 1),
+                                max_value=ahora().date(),
+                            )
+                            sexo_opciones = ["F", "M", "Otro"]
+                            sexo_actual = detalle_sel.get("sexo", "F")
+                            if sexo_actual not in sexo_opciones:
+                                sexo_opciones.append(sexo_actual)
+                            sexo_edit = col_e4.selectbox("Sexo", sexo_opciones, index=sexo_opciones.index(sexo_actual))
+                            estado_edit = st.selectbox("Estado", estados_disponibles, index=estados_disponibles.index(estado_actual))
+                            email_edit = st.text_input("Email", value=detalle_sel.get("email", ""))
+
+                    with st.expander("Contacto y direccion", expanded=False):
+                        if not es_movil:
+                            col_e7, col_e8 = st.columns(2)
+                        else:
+                            col_e7 = st.container()
+                            col_e8 = st.container()
+                        telefono_edit = col_e7.text_input("WhatsApp / telefono", value=detalle_sel.get("telefono", ""))
+                        if admin_total:
+                            empresa_edit = col_e8.text_input("Empresa / clinica", value=detalle_sel.get("empresa", mi_empresa))
+                        else:
+                            empresa_edit = mi_empresa
+                            col_e8.info(f"Clinica fija: {mi_empresa}")
+
+                        if not es_movil:
+                            col_e9, col_e10 = st.columns(2)
+                        else:
+                            col_e9 = st.container()
+                            col_e10 = st.container()
+                        contacto_emergencia_nombre_edit = col_e9.text_input("Contacto de emergencia (nombre)", value=detalle_sel.get("contacto_emergencia_nombre", ""))
+                        contacto_emergencia_tel_edit = col_e10.text_input("Contacto de emergencia (telefono)", value=detalle_sel.get("contacto_emergencia_telefono", ""))
+
+                        direccion_edit = st.text_input("Direccion exacta", value=detalle_sel.get("direccion", ""))
+                        obra_edit = st.text_input("Obra social / prepaga", value=detalle_sel.get("obra_social", ""))
+
+                    with st.expander("Datos de ingreso", expanded=False):
+                        if not es_movil:
+                            col_e11, col_e12, col_e13 = st.columns(3)
+                        else:
+                            col_e11 = st.container()
+                            col_e12 = st.container()
+                            col_e13 = st.container()
+                        fecha_ingreso_edit = col_e11.date_input(
+                            "Fecha de ingreso",
+                            value=_parsear_fecha_guardada(detalle_sel.get("fecha_ingreso", "")),
+                            min_value=date(1900, 1, 1),
+                            max_value=ahora().date(),
+                        )
+                        diagnostico_ingreso_edit = col_e12.text_input(
+                            "Diagnostico principal de ingreso",
+                            value=detalle_sel.get("diagnostico_ingreso", ""),
+                        )
+                        motivo_ingreso_edit = col_e13.text_input(
+                            "Motivo de consulta / ingreso",
+                            value=detalle_sel.get("motivo_ingreso", ""),
+                        )
+                        if estado_edit == "De Alta":
+                            fecha_egreso_default = _parsear_fecha_guardada(detalle_sel.get("fecha_egreso", ""))
+                            if fecha_egreso_default == date(1990, 1, 1):
+                                fecha_egreso_default = ahora().date()
+                            fecha_egreso_edit = st.date_input(
+                                "Fecha de egreso",
+                                value=fecha_egreso_default,
+                                min_value=date(1900, 1, 1),
+                                max_value=ahora().date(),
+                            )
+                        else:
+                            fecha_egreso_edit = None
+
+                    _peso_val_edit = detalle_sel.get("peso", "") or ""
+                    _talla_val_edit = detalle_sel.get("talla", "") or ""
+                    with st.expander("Datos fisicos", expanded=False):
+                        if not es_movil:
+                            col_p1, col_p2 = st.columns(2)
+                        else:
+                            col_p1 = st.container()
+                            col_p2 = st.container()
+                        try:
+                            _peso_default = float(_peso_val_edit) if _peso_val_edit else 0.0
+                        except Exception:
+                            _peso_default = 0.0
+                        try:
+                            _talla_default = float(_talla_val_edit) if _talla_val_edit else 0.0
+                        except Exception:
+                            _talla_default = 0.0
+                        peso_edit = col_p1.number_input("Peso (kg)", min_value=0.0, max_value=500.0, value=_peso_default, step=0.1, format="%.1f")
+                        talla_edit = col_p2.number_input("Talla (cm)", min_value=0.0, max_value=250.0, value=_talla_default, step=0.5, format="%.1f")
+
+                    with st.expander("Alertas clinicas", expanded=False):
+                        if not es_movil:
+                            col_e14, col_e15 = st.columns(2)
+                        else:
+                            col_e14 = st.container()
+                            col_e15 = st.container()
+                        alergias_edit = col_e14.text_area("Alergias", value=detalle_sel.get("alergias", ""), height=90)
+                        patologias_edit = col_e15.text_area(
+                            "Patologias previas / riesgos",
+                            value=detalle_sel.get("patologias", ""),
+                            height=90,
+                        )
+
+                    st.markdown("---")
+                    if st.form_submit_button("Guardar cambios del legajo", width='stretch', type="primary"):
+                        campos_legajo, error_legajo = _validar_legajo(
+                            nombre_edit,
+                            dni_edit,
+                            empresa_edit if admin_total else mi_empresa,
+                            mi_empresa,
+                            rol,
+                            excluir_paciente=paciente_sel_admin,
+                        )
+                        if error_legajo:
+                            log_event("admision", f"error: {error_legajo}")
+                            st.error(error_legajo)
+                        else:
+                            paciente_nuevo = _paciente_id(campos_legajo["nombre"], campos_legajo["dni"])
+                            if paciente_nuevo != paciente_sel_admin and paciente_nuevo in mapa_detalles_pacientes(st.session_state):
+                                log_event("admision", "error: Ya existe un legajo con ese nombre y DNI.")
+                                st.error("Ya existe un legajo con ese nombre y DNI.")
+                            else:
+                                detalle_anterior = dict(detalle_sel)
+                                detalles_actualizados = dict(detalle_sel)
+                                payload = {
+                                    "dni": campos_legajo["dni"],
+                                    "fnac": fnac_edit.strftime("%d/%m/%Y"),
+                                    "sexo": sexo_edit,
+                                    "telefono": _texto_unilinea(telefono_edit),
+                                    "direccion": _texto_unilinea(direccion_edit),
+                                    "empresa": campos_legajo["empresa"],
+                                    "estado": estado_edit,
+                                    "obra_social": _texto_unilinea(obra_edit),
+                                    "alergias": alergias_edit.strip(),
+                                    "patologias": patologias_edit.strip(),
+                                    "email": _texto_unilinea(email_edit),
+                                    "contacto_emergencia_nombre": _texto_unilinea(contacto_emergencia_nombre_edit),
+                                    "contacto_emergencia_telefono": _texto_unilinea(contacto_emergencia_tel_edit),
+                                    "fecha_ingreso": fecha_ingreso_edit.strftime("%d/%m/%Y"),
+                                    "diagnostico_ingreso": _texto_unilinea(diagnostico_ingreso_edit),
+                                    "motivo_ingreso": _texto_unilinea(motivo_ingreso_edit),
+                                    "foto_perfil": _procesar_foto_alta(foto_edit) if foto_edit else detalle_sel.get("foto_perfil", ""),
+                                    "peso": float(peso_edit) if peso_edit > 0 else (_peso_val_edit or ""),
+                                    "talla": float(talla_edit) if talla_edit > 0 else (_talla_val_edit or ""),
+                                }
+                                if estado_edit == "De Alta" and fecha_egreso_edit is not None:
+                                    payload["fecha_egreso"] = fecha_egreso_edit.strftime("%d/%m/%Y")
+                                from core.seguridad import encrypt_patient_dict
+                                detalles_actualizados.update(payload)
+                                detalles_actualizados = encrypt_patient_dict(detalles_actualizados)
+
+                                pacientes_db = list(st.session_state.get("pacientes_db", []))
+                                if paciente_sel_admin in pacientes_db:
+                                    indice = pacientes_db.index(paciente_sel_admin)
+                                    pacientes_db[indice] = paciente_nuevo
+                                else:
+                                    pacientes_db.append(paciente_nuevo)
+                                st.session_state["pacientes_db"] = list(dict.fromkeys(pacientes_db))
+
+                                _det_mut = asegurar_detalles_pacientes_en_sesion(st.session_state)
+                                _det_mut.pop(paciente_sel_admin, None)
+                                _det_mut[paciente_nuevo] = detalles_actualizados
+                                st.session_state["paciente_actual"] = paciente_nuevo
+
+                                registros_actualizados = 0
+                                if paciente_nuevo != paciente_sel_admin:
+                                    registros_actualizados = _renombrar_referencias_paciente(paciente_sel_admin, paciente_nuevo)
+
+                                registrar_auditoria_legal(
+                                    "Admision",
+                                    paciente_nuevo,
+                                    "Actualizacion de legajo",
+                                    st.session_state.get("u_actual", {}).get("nombre", "Sistema"),
+                                    st.session_state.get("u_actual", {}).get("matricula", ""),
+                                    (
+                                        "Legajo editado desde admision. "
+                                        f"Paciente anterior: {paciente_sel_admin}. Registros actualizados: {registros_actualizados}."
+                                    ),
+                                    empresa=detalles_actualizados.get("empresa", mi_empresa),
+                                )
+                                st.session_state.pop("_mc_mapa_pacientes_cache", None)
+                                _save_ok = guardar_datos(spinner=True)
+                                _estado_guardado = obtener_estado_guardado()
+                                log_event("admision", f"edit_save:ok={_save_ok}:state={_estado_guardado.get('estado')}:{_estado_guardado.get('detalle','')[:80]}")
+                                if not _save_ok or _estado_guardado.get("estado") in ("error", "pendiente"):
+                                    log_event("admision", f"save_fallo estado={_estado_guardado.get('estado')} ok={_save_ok}")
+                                    # Force direct Supabase upsert as fallback
+                                    try:
+                                        from core.database import supabase
+                                        from core._database_supabase import compress_payload, dumps_db_sorted
+                                        if supabase:
+                                            _fallback_data = {k: st.session_state.get(k) for k in [
+                                                "detalles_pacientes_db", "pacientes_db", "usuarios_db"
+                                            ] if k in st.session_state}
+                                            _payload, _ = dumps_db_sorted(_fallback_data)
+                                            supabase.table("medicare_db").upsert(
+                                                {"id": 1, "datos": compress_payload(_fallback_data)},
+                                                on_conflict="id"
+                                            ).execute()
+                                            log_event("admision", "fallback_upsert_ok")
+                                            queue_toast("Legajo actualizado (fallback).")
+                                    except Exception as _fe:
+                                        log_event("admision", f"fallback_upsert_error:{type(_fe).__name__}")
+                                        if _estado_guardado.get("estado") == "error":
+                                            st.error("Error al guardar los cambios. Revisa la conexion e intenta de nuevo.")
+                                else:
+                                    _sincronizar_edicion_paciente_sql_best_effort(
+                                        detalle_anterior=detalle_anterior,
+                                        detalle_nuevo=detalles_actualizados,
+                                        nombre_nuevo=campos_legajo["nombre"],
+                                    )
+                                    queue_toast("Legajo actualizado correctamente.")
+                                st.rerun()
+
+            with st.expander("Eliminar paciente y registros asociados (solo si el legajo fue cargado por error)", expanded=False):
+                if admin_total:
+                    st.warning(
+                        "Accion irreversible. Se borraran tambien los registros clinicos, legales y operativos vinculados."
+                    )
+                    if impacto_actual:
+                        for clave, cantidad in impacto_actual.items():
+                            st.caption(f"{DB_LABELS.get(clave, clave)}: {cantidad} registro(s)")
+                    else:
+                        st.caption("No se detectaron registros clinicos vinculados para este paciente.")
+
+                    confirmar_borrado = st.checkbox(
+                        f"Confirmo eliminar por completo el legajo de {_nombre_legible(paciente_sel_admin)}",
+                        key=f"adm_confirm_delete_{paciente_sel_admin}",
+                    )
+                    if st.button(
+                        "Eliminar paciente y limpiar historial vinculado",
+                        key=f"adm_delete_{paciente_sel_admin}",
+                        width='stretch',
+                        disabled=not confirmar_borrado,
+                        type="primary" if confirmar_borrado else "secondary",
+                    ):
+                        resumen_eliminado = _eliminar_referencias_paciente(paciente_sel_admin)
+                        asegurar_detalles_pacientes_en_sesion(st.session_state).pop(paciente_sel_admin, None)
+                        st.session_state["pacientes_db"] = [
+                            item for item in st.session_state.get("pacientes_db", []) if item != paciente_sel_admin
+                        ]
+                        detalle_empresa = detalle_sel.get("empresa", mi_empresa)
+                        detalle_texto = (
+                            " | ".join(f"{DB_LABELS.get(clave, clave)}: {cantidad}" for clave, cantidad in resumen_eliminado.items())
+                            if resumen_eliminado
+                            else "Paciente eliminado sin registros asociados."
+                        )
+                        registrar_auditoria_legal(
+                            "Admision",
+                            paciente_sel_admin,
+                            "Eliminacion de legajo",
+                            st.session_state.get("u_actual", {}).get("nombre", "Sistema"),
+                            st.session_state.get("u_actual", {}).get("matricula", ""),
+                            f"Paciente eliminado desde admision. {detalle_texto}",
+                            empresa=detalle_empresa,
+                        )
+                        st.session_state.pop("_mc_mapa_pacientes_cache", None)
+                        guardar_datos(spinner=True)
+                        _sincronizar_eliminacion_paciente_sql_best_effort(detalle_sel)
+                        queue_toast("Paciente eliminado correctamente.")
+                        st.rerun()
+                else:
+                    st.info("El borrado total del legajo solo esta disponible para usuarios con permisos de administrador.")
+
+            # ── Historial de admisiones ─────────────────────────────────
+            with st.expander("Historial de admisiones", expanded=False):
+                eventos_adm = [r for r in st.session_state.get("auditoria_legal_db", [])
+                              if isinstance(r, dict) and r.get("paciente") == paciente_sel_admin
+                              and r.get("seccion") == "Admision"]
+                if eventos_adm:
+                    eventos_adm.sort(key=lambda x: str(x.get("fecha_hora", x.get("fecha", ""))), reverse=True)
+                    for ev in eventos_adm[:20]:
+                        fe = str(ev.get("fecha_hora", ev.get("fecha", "")))[:16]
+                        usuario = ev.get("usuario", ev.get("profesional", "Sistema"))
+                        accion = ev.get("accion", "S/D")
+                        detalle = ev.get("detalle", "")
+                        st.markdown(f"- **{fe}** — *{usuario}* — {accion}")
+                        if detalle:
+                            st.caption(detalle[:200])
+                else:
+                    st.caption("Sin eventos de admision registrados para este paciente.")
+    else:
+        st.warning(
+            "No aparece ningun paciente en la lista con los filtros actuales. "
+            "Proba limpiar la busqueda, marcar **Incluir altas** o, si sos administrador, elegir otra clinica en el filtro. "
+            "Cuando haya al menos un legajo visible, vas a ver la tabla, el selector y los botones de editar / eliminar."
+        )
+
+
+def _render_admision_alta(mi_empresa, rol, admin_total):
+    """Sección: Alta de paciente nuevo."""
+    from core.ui_liviano import headers_sugieren_equipo_liviano
+    es_movil = headers_sugieren_equipo_liviano() or st.session_state.get("mc_liviano_modo") == "on"
+
+    st.divider()
+    st.markdown("## Alta de paciente nuevo")
+    st.markdown("##### Antes de dar el alta: buscar si ya existe")
+    buscar_adm = st.text_input("Nombre, DNI o apellido", placeholder="Ej: Juan Perez o 35123456", key="adm_buscar_duplicado")
+
+    if buscar_adm:
+        coincidencias = _buscar_coincidencias_legajo(buscar_adm, mi_empresa, rol)
+        if coincidencias:
+            st.warning(
+                f"Se encontraron {len(coincidencias)} pacientes similares. Si es el mismo caso, no cargues de nuevo: "
+                "subi a la seccion **Corregir o eliminar legajo** (arriba en esta misma pagina)."
+            )
+            for item in coincidencias[:5]:
+                st.caption(f"{item['id']} | DNI: {item.get('dni', 'S/D')} | Empresa: {item.get('empresa', 'S/D')}")
+        else:
+            st.success("No hay pacientes con ese nombre o DNI. Podes continuar con el alta.")
+
+    st.markdown(
+        """
+        <div class="mc-grid-3">
+            <div class="mc-card"><h4>Datos personales</h4><p>Nombre, DNI, fecha de nacimiento, sexo y telefono quedan visibles en todo el sistema.</p></div>
+            <div class="mc-card"><h4>Datos administrativos</h4><p>La obra social y la empresa asignada se usan en historia clinica, reportes y documentos.</p></div>
+            <div class="mc-card"><h4>Alertas clinicas</h4><p>Alergias y patologias se muestran en la barra lateral para reducir errores del equipo.</p></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    dni_preview = st.session_state.get("_adm_dni_preview", "").strip()
+    dni_norm_preview = _normalizar_dni(dni_preview)
+    if dni_norm_preview:
+        _dup_preview = None
+        for pid, det in mapa_detalles_pacientes(st.session_state).items():
+            if _normalizar_dni(det.get("dni", "")) == dni_norm_preview:
+                _dup_preview = (pid, det)
+                break
+        if _dup_preview:
+            pid_dup, det_dup = _dup_preview
+            log_event("admision", "error: DNI ya registrado")
+            st.error(
+                f"⚠️ **DNI ya registrado**: {_nombre_legible(pid_dup)} — "
+                f"Empresa: {det_dup.get('empresa', 'S/D')} — "
+                f"Estado: {det_dup.get('estado', 'Activo')} — "
+                f"Obra social: {det_dup.get('obra_social', 'S/D')}"
+            )
+
+    with st.form("adm_form", clear_on_submit=True):
+        with st.expander("Datos personales", expanded=True):
+            if not es_movil:
+                col_foto, col_campos = st.columns([1, 3])
+            else:
+                col_foto = st.container()
+                col_campos = st.container()
+            with col_foto:
+                foto_alta = st.file_uploader("Foto", type=["jpg", "jpeg", "png", "webp", "gif", "bmp"],
+                                              key="adm_foto_alta", label_visibility="collapsed")
+            with col_campos:
+                if not es_movil:
+                    col_a, col_b = st.columns(2)
+                else:
+                    col_a = st.container()
+                    col_b = st.container()
+                n = col_a.text_input("Nombre y apellido *", placeholder="Juan Perez")
+                d = col_b.text_input("DNI del paciente *", placeholder="35123456", key="_adm_dni_preview")
+                if not es_movil:
+                    col_c2, col_d2 = st.columns(2)
+                else:
+                    col_c2 = st.container()
+                    col_d2 = st.container()
+                f_nac = col_c2.date_input(
+                    "Fecha de nacimiento",
+                    value=date(1990, 1, 1),
+                    min_value=date(1900, 1, 1),
+                    max_value=ahora().date(),
+                )
+                se = col_d2.selectbox("Sexo", ["F", "M", "Otro"])
+                o = st.text_input("Obra social / prepaga", placeholder="OSDE / PAMI / Particular")
+                email_alta = st.text_input("Email", placeholder="paciente@correo.com")
+
+        with st.expander("Contacto y direccion", expanded=False):
+            if not es_movil:
+                col_g, col_h = st.columns(2)
+            else:
+                col_g = st.container()
+                col_h = st.container()
+            tel = col_g.text_input("WhatsApp / telefono", placeholder="3584302024")
+            contacto_emergencia_nombre = col_h.text_input("Contacto de emergencia (nombre)", placeholder="Familiar a cargo")
+
+            if not es_movil:
+                col_i, col_j = st.columns(2)
+            else:
+                col_i = st.container()
+                col_j = st.container()
+            contacto_emergencia_tel = col_i.text_input("Contacto de emergencia (telefono)", placeholder="3584302024")
+            dir_p = col_j.text_input("Direccion exacta", placeholder="Calle 123, barrio, ciudad")
+
+        with st.expander("Datos de ingreso", expanded=False):
+            if not es_movil:
+                col_k, col_l, col_m = st.columns(3)
+            else:
+                col_k = st.container()
+                col_l = st.container()
+                col_m = st.container()
+            fecha_ingreso_alta = col_k.date_input(
+                "Fecha de ingreso",
+                value=ahora().date(),
+                min_value=date(1900, 1, 1),
+                max_value=ahora().date(),
+            )
+            diagnostico_ingreso = col_l.text_input(
+                "Diagnostico principal de ingreso",
+                placeholder="Ej: Neumonia, Fractura de cadera, ACV isquemico...",
+                key="_adm_diag_ingreso",
+            )
+            motivo_ingreso = col_m.text_input(
+                "Motivo de consulta / ingreso",
+                placeholder="Ej: Disnea, dolor abdominal, trauma...",
+                key="_adm_motivo_ingreso",
+            )
+
+            if not es_movil:
+                col_n2, col_o2 = st.columns(2)
+            else:
+                col_n2 = st.container()
+                col_o2 = st.container()
+            peso_ingreso = col_n2.number_input(
+                "Peso (kg)",
+                min_value=0.0,
+                max_value=300.0,
+                value=0.0,
+                step=0.1,
+                format="%.1f",
+                help="Usado para cálculo automático de dosis pediátricas",
+                key="_adm_peso_ingreso",
+            )
+            talla_ingreso = col_o2.number_input(
+                "Talla / Altura (cm)",
+                min_value=0.0,
+                max_value=250.0,
+                value=0.0,
+                step=0.5,
+                format="%.1f",
+                key="_adm_talla_ingreso",
+            )
+
+        with st.expander("Alertas clinicas", expanded=False):
+            if not es_movil:
+                col_n, col_o = st.columns(2)
+            else:
+                col_n = st.container()
+                col_o = st.container()
+            alergias = col_n.text_area("Alergias", placeholder="Ej: penicilina, ibuprofeno...", height=90)
+            patologias = col_o.text_area("Patologias previas / riesgos", placeholder="Ej: DBT, HTA, marcapasos...", height=90)
+
+        if admin_total:
+            emp_d = st.text_input("Empresa / clinica", value=mi_empresa)
+        else:
+            emp_d = mi_empresa
+            st.info(f"Paciente asignado a: {mi_empresa}")
+
+        _faltantes = []
+        if not n.strip():
+            _faltantes.append("Nombre y apellido")
+        if not d.strip():
+            _faltantes.append("DNI")
+        if _faltantes:
+            st.warning(f"Campos obligatorios sin completar: {', '.join(_faltantes)}")
+
+        if st.form_submit_button("Habilitar paciente", width='stretch', type="primary"):
+            campos_legajo, error_legajo = _validar_legajo(n, d, emp_d, mi_empresa, rol)
+            if error_legajo:
+                log_event("admision", f"error: {error_legajo}")
+                st.error(error_legajo)
+            else:
+                id_p = _paciente_id(campos_legajo["nombre"], campos_legajo["dni"])
+                if id_p in mapa_detalles_pacientes(st.session_state):
+                    log_event("admision", "error: Ya existe un legajo con ese nombre y DNI.")
+                    st.error("Ya existe un legajo con ese nombre y DNI.")
+                else:
+                    _backup_pacientes = list(st.session_state.get("pacientes_db", []))
+                    _backup_detalles = dict(st.session_state.get("detalles_pacientes_db", {}))
+
+                    pacientes_db = list(st.session_state.get("pacientes_db", []))
+                    pacientes_db.append(id_p)
+                    st.session_state["pacientes_db"] = list(dict.fromkeys(pacientes_db))
+                    _peso_val = float(peso_ingreso or 0)
+                    _talla_val = float(talla_ingreso or 0)
+                    from core.seguridad import encrypt_patient_dict
+                    _nuevo_paciente = {
+                        "dni": campos_legajo["dni"],
+                        "fnac": f_nac.strftime("%d/%m/%Y"),
+                        "sexo": se,
+                        "telefono": _texto_unilinea(tel),
+                        "email": _texto_unilinea(email_alta),
+                        "contacto_emergencia_nombre": _texto_unilinea(contacto_emergencia_nombre),
+                        "contacto_emergencia_telefono": _texto_unilinea(contacto_emergencia_tel),
+                        "direccion": _texto_unilinea(dir_p),
+                        "empresa": campos_legajo["empresa"],
+                        "estado": "Activo",
+                        "obra_social": _texto_unilinea(o),
+                        "alergias": alergias.strip(),
+                        "patologias": patologias.strip(),
+                        "diagnostico_ingreso": diagnostico_ingreso.strip(),
+                        "motivo_ingreso": motivo_ingreso.strip(),
+                        "fecha_ingreso": fecha_ingreso_alta.strftime("%d/%m/%Y"),
+                        "peso": _peso_val if _peso_val > 0 else "",
+                        "talla": _talla_val if _talla_val > 0 else "",
+                        "foto_perfil": _procesar_foto_alta(foto_alta) if foto_alta else "",
+                    }
+                    _nuevo_paciente = encrypt_patient_dict(_nuevo_paciente)
+                    asegurar_detalles_pacientes_en_sesion(st.session_state)[id_p] = _nuevo_paciente
+                    # Guardar peso en vitales_db para uso en cálculo de dosis
+                    if _peso_val > 0:
+                        _vitales = st.session_state.setdefault("vitales_db", [])
+                        _vitales.append({
+                            "paciente": id_p,
+                            "peso": _peso_val,
+                            "talla": _talla_val if _talla_val > 0 else "",
+                            "fecha": ahora().strftime("%d/%m/%Y %H:%M:%S"),
+                            "empresa": campos_legajo["empresa"],
+                            "origen": "admision",
+                        })
+                    st.session_state["paciente_actual"] = id_p
+                    registrar_auditoria_legal(
+                        "Admision",
+                        id_p,
+                        "Alta de paciente",
+                        st.session_state.get("u_actual", {}).get("nombre", "Sistema"),
+                        st.session_state.get("u_actual", {}).get("matricula", ""),
+                        "Alta inicial del legajo del paciente.",
+                        empresa=campos_legajo["empresa"],
+                    )
+                    st.session_state.pop("_mc_mapa_pacientes_cache", None)
+                    guardar_datos(spinner=True)
+
+                    _estado_guardado = obtener_estado_guardado()
+                    if _estado_guardado.get("estado") == "error":
+                        st.session_state["pacientes_db"] = _backup_pacientes
+                        st.session_state["detalles_pacientes_db"] = _backup_detalles
+                        st.session_state.pop("paciente_actual", None)
+                        st.error("Error al guardar el paciente. Revisa la conexion e intenta de nuevo.")
+                        log_event("admision", "error: guardado fallo tras alta paciente")
+                    else:
+                        _sincronizar_alta_paciente_best_effort(
+                            campos_legajo["nombre"],
+                            campos_legajo["dni"],
+                            campos_legajo["empresa"],
+                        )
+                        queue_toast(f"Paciente {campos_legajo['nombre']} dado de alta correctamente.")
+                        st.rerun()
+
+    st.caption("Los pacientes quedan disponibles en visitas, historia clinica y documentos.")

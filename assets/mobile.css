@@ -1,0 +1,1304 @@
+/* ============================================================
+   MediCare PRO - Mobile CSS consolidado
+   Fix critico: telefono sin sidebar nativo para evitar cortes
+   ============================================================ */
+
+/* Helpers de visibilidad */
+.mc-mobile-only { display: none; }
+
+@media screen and (max-width: 768px), screen and (max-width: 980px) and (hover: none) and (pointer: coarse) {
+
+    .mc-mobile-only { display: block !important; }
+    .mc-desktop-only,
+    .mc-only-desktop { display: none !important; }
+
+    /* ========================================================
+        1) RESET TOTAL DE VIEWPORT
+       ======================================================== */
+    html,
+    body,
+    #root,
+    .stApp,
+    [data-testid="stApp"],
+    [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewContainer"] > div,
+    [data-testid="stAppViewContainer"] > .main,
+    [data-testid="stAppViewContainer"] main,
+    section.main,
+    main,
+    .block-container {
+        width: 100% !important;
+        max-width: 100vw !important;
+        min-width: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 0.5rem 0.5rem !important;
+        transform: none !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+    }
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overscroll-behavior-x: none !important;
+    }
+
+    section[data-testid="stSidebar"],
+    aside[data-testid="stSidebar"],
+    [data-testid="stSidebar"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -99999px !important;
+        right: auto !important;
+        top: 0 !important;
+        transform: none !important;
+        z-index: -1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    button[kind="header"],
+    button[kind="headerNoPadding"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    [data-testid="stHeader"],
+    header[data-testid="stHeader"],
+    [data-testid="stToolbar"] {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+    }
+
+    /* ── Touch targets universales 44px ──────────────────────── */
+    button, a, select, input, textarea, label, [role="button"], [role="tab"],
+    [role="option"], [data-testid="stButton"] button,
+    [data-testid="stFormSubmitButton"] button,
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    [data-testid="stTextInput"] input,
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stCheckbox"] label,
+    [data-testid="stRadio"] label,
+    [data-testid="stDataEditor"] td,
+    [data-testid="stDataFrame"] td,
+    .stDownloadButton button {
+        min-height: 44px !important;
+        touch-action: manipulation !important;
+    }
+    /* Evitar zoom automatico en inputs (iOS) */
+    input, textarea, select {
+        font-size: 16px !important;
+    }
+    /* Selectores con mayor altura tactil */
+    div[data-baseweb="select"] > div {
+        min-height: 52px !important;
+    }
+    /* Botones ancho completo */
+    [data-testid="stButton"], [data-testid="stFormSubmitButton"],
+    .stDownloadButton {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stButton"] button, [data-testid="stFormSubmitButton"] button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* ── Navegacion tipo pills touch ──────────────────────────── */
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] > [data-testid="stButton"] button {
+        border-radius: 9999px !important;
+        padding: 10px 18px !important;
+        font-size: 0.82rem !important;
+        white-space: nowrap !important;
+    }
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        gap: 0.35rem !important;
+    }
+    [data-testid="stSelectbox"] {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stSelectbox"] > div {
+        min-height: 48px !important;
+        border-radius: 9999px !important;
+    }
+
+    /* ── Formularios: inputs espaciados ────────────────────────── */
+    [data-testid="stTextInput"], [data-testid="stTextArea"],
+    [data-testid="stSelectbox"], [data-testid="stDateInput"],
+    [data-testid="stTimeInput"], [data-testid="stNumberInput"],
+    [data-testid="stMultiSelect"], [data-testid="stFileUploader"] {
+        margin-bottom: 0.75rem !important;
+    }
+    [data-testid="stVerticalBlock"] {
+        gap: 0.35rem !important;
+    }
+    [data-testid="stExpander"] details {
+        min-height: 48px !important;
+    }
+    [data-testid="stExpander"] summary {
+        min-height: 48px !important;
+        padding: 12px 14px !important;
+        border-radius: 14px !important;
+    }
+
+    /* ── Tablas y DataFrames scroll ───────────────────────────── */
+    [data-testid="stDataFrame"], [data-testid="stTable"] {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block !important;
+    }
+    [data-testid="stDataFrame"] table, [data-testid="stTable"] table {
+        font-size: 0.78rem !important;
+    }
+    [data-testid="stDataFrame"] thead th,
+    [data-testid="stTable"] thead th {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 2 !important;
+        background: #0f172a !important;
+    }
+
+    /* ── Metric cards compactas ───────────────────────────────── */
+    [data-testid="stMetric"] {
+        padding: 8px 10px !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.72rem !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.1rem !important;
+    }
+
+    /* ── Tabs y segmentados ───────────────────────────────────── */
+    [data-testid="stTabs"] [role="tablist"] {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        gap: 2px !important;
+    }
+    [data-testid="stTabs"] [role="tab"] {
+        flex: 0 0 auto !important;
+        min-height: 44px !important;
+        padding: 8px 14px !important;
+        font-size: 0.82rem !important;
+    }
+    [data-testid="stSegmentedControl"] {
+        overflow-x: auto !important;
+    }
+    [data-testid="stSegmentedControl"] [role="radiogroup"] {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+    }
+
+    /* ── Radio y checkbox touch ───────────────────────────────── */
+    [data-testid="stRadio"] div[role="radiogroup"] {
+        gap: 8px !important;
+    }
+    [data-testid="stRadio"] label, [data-testid="stCheckbox"] label {
+        padding: 10px 0 !important;
+        min-height: 44px !important;
+        align-items: center !important;
+    }
+
+    .block-container {
+        padding-left: 0.65rem !important;
+        padding-right: 0.65rem !important;
+        padding-top: 0.6rem !important;
+        padding-bottom: max(7.5rem, calc(env(safe-area-inset-bottom) + 6rem)) !important;
+    }
+
+    [data-testid="stElementContainer"],
+    .element-container {
+        margin-bottom: 0 !important;
+    }
+
+    div[data-testid="stForm"] [data-testid="stElementContainer"],
+    div[data-testid="stForm"] .element-container,
+    div[data-testid="stForm"] [data-testid="stElementContainer"] > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    [data-testid="stVerticalBlock"] {
+        gap: 0.25rem !important;
+    }
+
+    .mc-module-linkbar {
+        display: flex !important;
+        gap: 0.45rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        padding: 0.2rem 0 0.45rem !important;
+        margin: 0 0 0.25rem !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: thin !important;
+    }
+
+    .mc-module-link {
+        flex: 0 0 auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 44px !important;
+        max-width: min(72vw, 18rem) !important;
+        padding: 0 0.85rem !important;
+        border-radius: 999px !important;
+        border: 1px solid rgba(148, 163, 184, 0.28) !important;
+        background: rgba(15, 23, 42, 0.68) !important;
+        color: #e2e8f0 !important;
+        text-decoration: none !important;
+        font-size: 0.9rem !important;
+        line-height: 1.15 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .mc-module-link.is-active {
+        border-color: rgba(45, 212, 191, 0.65) !important;
+        background: rgba(13, 148, 136, 0.24) !important;
+        color: #ccfbf1 !important;
+        font-weight: 700 !important;
+    }
+
+    .stApp {
+        padding-bottom: max(7rem, calc(env(safe-area-inset-bottom) + 5.5rem)) !important;
+    }
+
+    .block-container *,
+    [data-testid="stAppViewContainer"] *,
+    [data-testid="stVerticalBlock"] *,
+    [data-testid="stHorizontalBlock"] *,
+    [data-testid="stElementContainer"] * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 0.5rem !important;
+    }
+
+    [data-testid="stHorizontalBlock"] > div,
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+    [data-testid="stHorizontalBlock"] > [data-testid="column"],
+    [data-testid="stHorizontalBlock"] [data-testid="stColumn"],
+    [data-testid="column"],
+    div[data-testid="column"] {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        flex: 1 1 auto !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    input,
+    textarea,
+    select,
+    [data-baseweb="input"],
+    [data-baseweb="input"] > div,
+    [data-baseweb="select"],
+    [data-baseweb="select"] > div,
+    [data-baseweb="textarea"],
+    [data-baseweb="textarea"] > div,
+    [data-baseweb="datepicker"],
+    [data-baseweb="datepicker"] > div,
+    [data-baseweb="timepicker"],
+    [data-baseweb="timepicker"] > div,
+    [data-testid="stNumberInput"],
+    [data-testid="stDateInput"],
+    [data-testid="stTimeInput"],
+    [data-testid="stTextInput"],
+    [data-testid="stTextArea"],
+    [data-testid="stSelectbox"],
+    [data-testid="stMultiSelect"],
+    [data-testid="stFileUploader"],
+    [data-testid="stCameraInput"] {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        font-size: 16px !important;
+    }
+
+    input,
+    textarea,
+    select,
+    [data-baseweb="input"] input,
+    [data-baseweb="select"] > div,
+    [data-testid="stNumberInput"] input,
+    [data-testid="stDateInput"] input,
+    [data-testid="stTimeInput"] input {
+        min-height: 44px !important;
+        font-size: 16px !important;
+    }
+
+    textarea,
+    [data-testid="stTextArea"] textarea {
+        min-height: 84px !important;
+        resize: vertical !important;
+    }
+
+    [data-testid="stSlider"],
+    [data-testid="stSlider"] > div,
+    [data-testid="stSlider"] [role="slider"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        touch-action: pan-x !important;
+    }
+
+    [data-testid="stFileUploader"] section {
+        min-height: 92px !important;
+        padding: 0.75rem !important;
+    }
+
+    [data-testid="stFileUploader"] small,
+    [data-testid="stFileUploader"] span,
+    [data-testid="stFileUploader"] p {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        line-height: 1.3 !important;
+    }
+
+    [data-baseweb="select"] {
+        min-height: 52px !important;
+        height: auto !important;
+    }
+
+    [data-testid="stTextInputRootElement"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        display: flex !important;
+    }
+
+    [data-testid="stTextInputRootElement"] input {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    [data-testid="stTextInputRootElement"] button {
+        flex: 0 0 44px !important;
+        width: 44px !important;
+        min-width: 44px !important;
+        max-width: 44px !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    [data-baseweb="select"] > div {
+        min-height: 52px !important;
+        height: 52px !important;
+        padding: 0 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    [data-baseweb="select"] [role="combobox"],
+    [data-baseweb="select"] div[role="combobox"] {
+        min-height: 52px !important;
+        height: 52px !important;
+        display: flex !important;
+        align-items: center !important;
+        overflow: hidden !important;
+        min-width: 0 !important;
+    }
+
+    [data-baseweb="select"] span,
+    [data-baseweb="select"] div {
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        line-height: 1.25 !important;
+        max-height: 52px !important;
+    }
+
+    [data-baseweb="select"] svg {
+        flex: 0 0 auto !important;
+        min-width: 20px !important;
+    }
+
+    [data-baseweb="popover"],
+    [data-baseweb="popover"] > div,
+    div[role="listbox"],
+    ul[role="listbox"] {
+        width: calc(100vw - 1.3rem) !important;
+        max-width: calc(100vw - 1.3rem) !important;
+        min-width: 0 !important;
+        max-height: min(42vh, 360px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+        z-index: 1000002 !important;
+    }
+
+    div[role="option"],
+    li[role="option"] {
+        min-height: 42px !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        padding: 8px 12px !important;
+        box-sizing: border-box !important;
+    }
+
+    [data-testid="stButton"],
+    [data-testid="stButton"] button,
+    [data-testid="stFormSubmitButton"],
+    [data-testid="stFormSubmitButton"] button,
+    [data-testid^="stBaseButton-secondaryFormSubmit"],
+    [data-testid^="stBaseButton-primaryFormSubmit"],
+    [data-testid="stDownloadButton"],
+    [data-testid="stDownloadButton"] button,
+    button {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        min-height: 44px !important;
+        touch-action: manipulation !important;
+    }
+
+    [data-testid="stFormSubmitButton"] {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    [data-testid="stFormSubmitButton"] button {
+        justify-content: center !important;
+    }
+
+    [data-testid="stTextInputRootElement"] button {
+        flex: 0 0 44px !important;
+        width: 44px !important;
+        min-width: 44px !important;
+        max-width: 44px !important;
+    }
+
+    [data-testid="stExpander"],
+    [data-testid="stExpander"] details,
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"],
+    [data-testid="stDataEditor"],
+    [data-testid="stJson"],
+    [data-testid="stCodeBlock"],
+    [data-testid="stPlotlyChart"],
+    [data-testid="stVegaLiteChart"],
+    [data-testid="stPyplot"],
+    [data-testid="stMap"],
+    [data-testid="stImage"],
+    [data-testid="stVideo"],
+    [data-testid="stAudio"],
+    [data-testid="stIFrame"],
+    div[data-testid="stForm"],
+    div[data-testid="stForm"] > div,
+    [data-testid="stMetric"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    [data-testid="stCodeBlock"] pre,
+    [data-testid="stJson"] pre,
+    pre,
+    code {
+        white-space: pre-wrap !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    [data-testid="stPlotlyChart"] svg,
+    [data-testid="stVegaLiteChart"] svg {
+        max-width: 100% !important;
+    }
+
+    [data-testid="stAlert"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-wrap: anywhere !important;
+        margin: 0.25rem 0 !important;
+    }
+
+    [data-testid="stAlert"] > div {
+        padding: 0.62rem 0.72rem !important;
+    }
+
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] p {
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+    }
+
+    details summary {
+        min-height: 46px !important;
+        align-items: center !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    [data-testid="stMetric"] { padding: 6px 8px !important; }
+    [data-testid="stMetricLabel"] { font-size: 11px !important; }
+    [data-testid="stMetricValue"] { font-size: 18px !important; }
+
+    [data-testid="stTabs"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    [data-testid="stTabs"] [role="tablist"] {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100% !important;
+    }
+
+    [data-testid="stTabs"] [role="tab"] {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        min-height: 44px !important;
+    }
+
+    [data-testid="stSegmentedControl"],
+    [data-testid="stSegmentedControl"] div[role="radiogroup"],
+    [data-testid="stSegmentedControl"] div[role="group"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    [data-testid="stRadio"] div[role="radiogroup"] {
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+
+    [data-testid="stRadio"] label,
+    [data-testid="stCheckbox"] label,
+    [data-testid="stCheckbox"] {
+        min-height: 44px !important;
+        padding: 6px 0 !important;
+        align-items: center !important;
+    }
+
+    /* --- Data editor: touch-friendly cells & checkboxes --- */
+    [data-testid="stDataEditor"] td,
+    [data-testid="stDataEditor"] th {
+        min-height: 44px !important;
+        padding: 4px 6px !important;
+        font-size: 14px !important;
+    }
+    [data-testid="stDataEditor"] input[type="checkbox"] {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+        transform: scale(1.3) !important;
+        cursor: pointer !important;
+    }
+    [data-testid="stDataEditor"] {
+        max-width: 100vw !important;
+        overflow-x: auto !important;
+    }
+
+    /* --- Metric cards: compact on mobile --- */
+    [data-testid="stMetric"] {
+        padding: 6px 8px !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 11px !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 18px !important;
+    }
+
+    /* --- DataFrames: scroll horizontal --- */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"] {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* --- Imagenes responsivas --- */
+    img,
+    .stImage img,
+    iframe,
+    video,
+    canvas,
+    svg {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    /* ============================================================
+       UNIQUE RULES FROM SECOND BLOCK (merged upstream)
+       ============================================================ */
+
+    .block-container::before {
+        content: none !important;
+        display: none !important;
+    }
+
+    /* Select inputs: mayor altura táctil */
+    div[data-baseweb="select"],
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] div[role="combobox"] {
+        min-height: 58px !important;
+        height: auto !important;
+        overflow: hidden !important;
+        align-items: center !important;
+    }
+
+    div[data-baseweb="select"] div[role="combobox"] input {
+        width: 1px !important;
+        min-width: 1px !important;
+        max-width: 1px !important;
+        opacity: 0 !important;
+        caret-color: transparent !important;
+        pointer-events: none !important;
+    }
+
+    div[data-baseweb="select"] div[role="combobox"] > div,
+    div[data-baseweb="select"] div[role="combobox"] span {
+        display: block !important;
+        width: 100% !important;
+        max-width: calc(100vw - 5.5rem) !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        line-height: 1.35 !important;
+        max-height: none !important;
+        font-size: clamp(15px, 4vw, 18px) !important;
+    }
+
+    div[data-baseweb="popover"] {
+        position: fixed !important;
+        left: .65rem !important;
+        right: .65rem !important;
+        width: calc(100vw - 1.3rem) !important;
+        max-width: calc(100vw - 1.3rem) !important;
+        z-index: 2147483647 !important;
+    }
+
+    div[data-baseweb="popover"] ul[role="listbox"],
+    div[data-baseweb="popover"] div[role="listbox"] {
+        max-height: min(48vh, 390px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-radius: 14px !important;
+    }
+
+    div[data-baseweb="popover"] li[role="option"],
+    div[data-baseweb="popover"] div[role="option"] {
+        min-height: 50px !important;
+        padding: 10px 14px !important;
+        font-size: 16px !important;
+        line-height: 1.25 !important;
+    }
+
+    .mc-assistant-nav-title {
+        display: block !important;
+        font-weight: 700 !important;
+        color: #e2e8f0 !important;
+        margin: .5rem 0 .4rem !important;
+    }
+
+    div[data-testid="stRadio"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+    }
+
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: .55rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+    }
+
+    div[data-testid="stRadio"] label {
+        width: 100% !important;
+        min-height: 50px !important;
+        border: 1px solid rgba(148, 163, 184, .32) !important;
+        border-radius: 14px !important;
+        background: rgba(15, 23, 42, .62) !important;
+        padding: .65rem .8rem !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    div[data-testid="stRadio"] label p {
+        font-size: 16px !important;
+        line-height: 1.25 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    [data-testid="stTabs"] [role="tablist"] {
+        min-height: 48px !important;
+        padding-bottom: 2px !important;
+    }
+
+    [data-testid="stTabs"] [role="tab"] p {
+        font-size: 15px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* HOTFIX: data editor scroll táctil */
+    [data-testid="stDataEditor"],
+    [data-testid="stDataEditor"] > div,
+    [data-testid="stDataEditor"] iframe,
+    [data-testid="stDataFrame"],
+    [data-testid="stDataFrame"] > div,
+    .stDataFrame,
+    .stDataEditor {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x pan-y !important;
+        overscroll-behavior: contain !important;
+    }
+
+    [data-testid="stDataEditor"] canvas,
+    [data-testid="stDataFrame"] canvas,
+    [data-testid="stDataEditor"] [role="grid"],
+    [data-testid="stDataFrame"] [role="grid"],
+    [data-testid="stDataEditor"] [role="gridcell"],
+    [data-testid="stDataFrame"] [role="gridcell"] {
+        touch-action: pan-x pan-y !important;
+        pointer-events: auto !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+    }
+
+    [data-testid="stDataEditor"] [role="gridcell"],
+    [data-testid="stDataFrame"] [role="gridcell"] {
+        min-height: 44px !important;
+        font-size: 15px !important;
+    }
+
+    [data-testid="stDataEditor"] [data-baseweb="popover"],
+    [data-testid="stDataFrame"] [data-baseweb="popover"],
+    div[data-baseweb="popover"] {
+        z-index: 2147483647 !important;
+    }
+
+    /* Oculta overlay flotante Streamlit Cloud en móvil */
+    [data-testid="stStatusWidget"],
+    [data-testid="stDecoration"],
+    .stDeployButton,
+    .viewerBadge_container__1QSob,
+    .viewerBadge_link__1S137,
+    .viewerBadge_text__1JaDK {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    .mc-empty-mobile {
+        border: 1px solid rgba(45, 212, 191, 0.22) !important;
+        border-radius: 12px !important;
+        padding: 18px 16px !important;
+        margin: 6px 0 12px !important;
+        background: rgba(15, 23, 42, 0.72) !important;
+    }
+
+    .mc-empty-mobile h3 {
+        margin: 0 0 8px !important;
+        font-size: 1.05rem !important;
+        line-height: 1.25 !important;
+        color: #e2e8f0 !important;
+    }
+
+    .mc-empty-mobile p {
+        margin: 0 !important;
+        font-size: 0.92rem !important;
+        line-height: 1.45 !important;
+        color: #94a3b8 !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    html body .block-container {
+        padding: 0.8rem 1rem !important;
+        max-width: 100% !important;
+    }
+}
+
+html {
+    scroll-behavior: smooth !important;
+}
+
+* {
+    -webkit-tap-highlight-color: rgba(20, 184, 166, 0.2) !important;
+    outline-color: #14b8a6 !important;
+}
+
+button:active, [role="button"]:active, a:active, label:active {
+    transform: scale(0.97) !important;
+    transition: transform 0.1s ease !important;
+}
+
+button, [role="button"], a, input, select, textarea, label {
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+input:focus, select:focus, textarea:focus,
+[data-baseweb="input"]:focus-within,
+[data-baseweb="select"]:focus-within,
+[data-baseweb="textarea"]:focus-within {
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3) !important;
+    border-color: #14b8a6 !important;
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+    .block-container {
+        padding-bottom: max(7.5rem, calc(env(safe-area-inset-bottom) + 6rem)) !important;
+    }
+}
+
+@supports (padding: constant(safe-area-inset-bottom)) {
+    .block-container {
+        padding-bottom: max(7.5rem, calc(constant(safe-area-inset-bottom) + 6rem)) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (pointer: coarse) {
+    button, a, input, select, textarea,
+    [role="button"], [role="tab"], [role="option"],
+    [data-testid="stButton"] button,
+    [data-testid="stFormSubmitButton"] button {
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(20, 184, 166, 0.25) !important;
+    }
+}
+
+/* ── Navegacion inline en mobile: pills compactas scrolleables ── */
+body:not(:has([data-testid="stSidebar"])) button[key^="_nav_toggle_"] {
+    min-height: 38px !important;
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+    border-radius: 9999px !important;
+    background: rgba(15,23,42,0.5) !important;
+    border: 1px solid rgba(51,65,85,0.25) !important;
+    color: #e2e8f0 !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin: 2px 0 !important;
+}
+body:not(:has([data-testid="stSidebar"])) button[key^="_nav_module_"] {
+    min-height: 36px !important;
+    padding: 6px 14px !important;
+    font-size: 0.78rem !important;
+    border-radius: 9999px !important;
+    width: 100% !important;
+    text-align: left !important;
+    background: rgba(30,41,59,0.4) !important;
+    border: 1px solid rgba(100,180,255,0.06) !important;
+    color: #c8d8e8 !important;
+}
+
+/* ── Columns(3+) en mobile: grid 2 columnas en vez de apilar ──── */
+@media screen and (max-width: 768px), screen and (max-width: 980px) and (hover: none) and (pointer: coarse) {
+    [data-testid="stHorizontalBlock"]:not([data-testid="stSidebar"] [data-testid="stHorizontalBlock"]) {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+    }
+    [data-testid="stHorizontalBlock"]:not([data-testid="stSidebar"] [data-testid="stHorizontalBlock"]) > div {
+        min-width: 45% !important;
+        flex: 1 1 45% !important;
+    }
+    /* Metric cards en mobile mas compactos */
+    [data-testid="stMetric"] {
+        padding: 0.4rem 0.5rem !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.7rem !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.2rem !important;
+    }
+    /* Reducir padding general en mobile */
+    .block-container {
+        padding: 1rem 0.5rem !important;
+    }
+    /* Inputs mas compactos */
+    [data-testid="stTextInput"] input,
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        min-height: 2.4rem !important;
+    }
+    /* Botones mas compactos */
+    .stButton button {
+        min-height: 34px !important;
+        font-size: 0.82rem !important;
+    }
+    /* Tabs mas compactos */
+    button[data-baseweb="tab"] {
+        font-size: 0.78rem !important;
+        padding: 0.3rem 0.6rem !important;
+    }
+    /* DataFrames con scroll horizontal */
+    [data-testid="stDataFrame"] {
+        overflow-x: auto !important;
+        max-width: 100vw !important;
+    }
+    [data-testid="stDataFrame"] table {
+        font-size: 0.72rem !important;
+    }
+}
+
+/* ── Touch targets: altura minima 44px para botones en movil ──── */
+@media (pointer: coarse) {
+    .stButton button, [data-testid="stButton"] button,
+    [data-testid="stFormSubmitButton"] button, button[kind],
+    [data-testid="baseButton-primary"], [data-testid="baseButton-secondary"] {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        min-height: 44px !important;
+    }
+    [data-testid="stTextInput"] input {
+        min-height: 44px !important;
+    }
+    [data-testid="stCheckbox"] label {
+        min-height: 44px !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+}
+
+/* ── Login en mobile ───────────────────────────────────────────── */
+@media screen and (max-width: 480px), screen and (max-width: 980px) and (hover: none) and (pointer: coarse) {
+    section.main > div {
+        padding-top: 0.5rem !important;
+    }
+    h3 {
+        font-size: 1.1rem !important;
+    }
+    .stCaption {
+        font-size: 0.78rem !important;
+    }
+}
+
+/* ── Pantallas muy pequenas (< 480px) ──────────────────────────── */
+@media screen and (max-width: 480px), screen and (max-width: 980px) and (hover: none) and (pointer: coarse) {
+    .block-container {
+        padding: 0.6rem 0.3rem !important;
+    }
+    [data-testid="stMetric"] {
+        padding: 0.3rem !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1rem !important;
+    }
+    .stButton button {
+        font-size: 0.75rem !important;
+        padding: 0.35rem 0.5rem !important;
+        min-height: 30px !important;
+    }
+    [data-testid="stTextInput"] input,
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        font-size: 15px !important;
+        min-height: 2.2rem !important;
+    }
+    h1 { font-size: 1.2rem !important; }
+    h2 { font-size: 1.05rem !important; }
+    h3 { font-size: 0.95rem !important; }
+    .mc-hero {
+        padding: 0.5rem 0.6rem !important;
+    }
+    .mc-hero-title {
+        font-size: 0.95rem !important;
+    }
+    .mc-hero-text {
+        font-size: 0.7rem !important;
+    }
+    h1, h2, h3 {
+        word-break: break-word !important;
+    }
+}
+
+/* ── OVERRIDE: efectos GPU pesados desactivados en touch ─────────
+   backdrop-filter blur, gradientes complejos y sombras grandes
+   saturan la GPU del telefono, crashean el tab y causan pantalla
+   azul. En dispositivos touch se reemplazan por colores planos. ──── */
+@media (hover: none) and (pointer: coarse) {
+    /* GPU-safe global: eliminar blur y will-change en touch */
+    *, *::before, *::after {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    div[data-testid="stButton"] > button,
+    [data-testid="stMetric"] {
+        transform: none !important;
+        will-change: auto !important;
+    }
+    .stApp {
+        background: #0c1929 !important;
+    }
+    [data-testid="stSidebar"] {
+        background: #0a1628 !important;
+        border-right: 1px solid rgba(100,180,255,0.06) !important;
+    }
+    div[data-testid="stForm"],
+    div[data-testid="stMetric"],
+    div[data-testid="stDataFrame"],
+    div[data-testid="stTable"],
+    .stAlert, .streamlit-expanderHeader {
+        background: rgba(255,255,255,0.04) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 1px solid rgba(100,180,255,0.06) !important;
+        border-radius: 14px !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stMetric"]:hover {
+        border-color: rgba(14,165,233,0.15) !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    div[data-testid="stButton"] > button {
+        border-radius: 12px !important;
+        font-weight: 500 !important;
+        border: 1px solid rgba(100,180,255,0.08) !important;
+        background: rgba(255,255,255,0.03) !important;
+        min-height: 40px !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stButton"] > button:hover {
+        transform: none !important;
+        border-color: rgba(14,165,233,0.2) !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stButton"] > button[kind="primary"] {
+        background: #2563eb !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stButton"] > button[kind="primary"]:hover {
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    div[data-testid="stButton"] > button[kind="secondary"] {
+        background: #1e293b !important;
+        border: 1px solid rgba(100,180,255,0.1) !important;
+    }
+    input, select, textarea, div[data-baseweb="select"] > div {
+        border-radius: 10px !important;
+        border: 1px solid rgba(100,180,255,0.1) !important;
+        background: rgba(0,0,0,0.15) !important;
+        color: #e2e8f0 !important;
+        box-shadow: none !important;
+    }
+    input:focus, select:focus, textarea:focus {
+        border-color: #0ea5e9 !important;
+        box-shadow: 0 0 0 2px rgba(14,165,233,0.1) !important;
+    }
+
+    /* Landing page: eliminar blur, gradient text, sombras */
+    .block-container > div:first-of-type {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(3,5,10,0.93) !important;
+    }
+    .block-container > div:first-of-type div[data-testid="stButton"] > button[kind="primary"],
+    .mc-lp-sticky-btn-wrap a {
+        background: #2563eb !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        transform: none !important;
+    }
+    .block-container > div:first-of-type div[data-testid="stButton"] > button[kind="primary"]:hover,
+    .mc-lp-sticky-btn-wrap a:hover {
+        transform: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+    }
+    .mc-lp-hero-title {
+        background: none !important;
+        -webkit-background-clip: unset !important;
+        -webkit-text-fill-color: #f4f7fb !important;
+        background-clip: unset !important;
+        color: #f4f7fb !important;
+    }
+    .mc-lp-btn-primary {
+        background: #2563eb !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    .mc-lp-btn-primary:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    .mc-lp-card {
+        background: rgba(255,255,255,0.04) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    .mc-lp-card:hover {
+        transform: none !important;
+        border-color: rgba(14,165,233,0.2) !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Guardia final mobile: la app ya renderiza navegacion y acciones en el cuerpo.
+   El control nativo de sidebar de Streamlit se superpone en telefono y abre un
+   panel parcial/inestable; mantenerlo oculto evita que parezca que la app se rompio. */
+@media screen and (max-width: 768px) {
+    body:has(.mc-auth-page-marker) .block-container,
+    body:has(.mc-auth-page-marker) [data-testid="stMainBlockContainer"] {
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+
+    body:has(.mc-auth-page-marker) [data-testid="stHorizontalBlock"] {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+    }
+
+    body:has(.mc-auth-page-marker) [data-testid="stHorizontalBlock"] > div,
+    body:has(.mc-auth-page-marker) [data-testid="stHorizontalBlock"] [data-testid="stColumn"],
+    body:has(.mc-auth-page-marker) [data-testid="column"],
+    body:has(.mc-auth-page-marker) div[data-testid="column"] {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+        margin: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    body:has(.mc-auth-page-marker) [data-testid="stForm"],
+    body:has(.mc-auth-page-marker) [data-testid="stForm"] > div,
+    body:has(.mc-auth-page-marker) [data-testid="stRadio"],
+    body:has(.mc-auth-page-marker) [data-testid="stTextInput"],
+    body:has(.mc-auth-page-marker) [data-testid="stFormSubmitButton"] {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    [data-testid="stSidebar"],
+    section[data-testid="stSidebar"],
+    aside[data-testid="stSidebar"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        transform: translateX(-120vw) !important;
+        position: absolute !important;
+        z-index: -1 !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] *,
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] *,
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stExpandSidebarButton"] *,
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapseButton"] *,
+    [data-testid="stSidebarHeader"],
+    [data-testid="stSidebarHeader"] *,
+    button[data-testid="stBaseButton-headerNoPadding"],
+    button[kind="headerNoPadding"],
+    button[kind="header"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        overflow: hidden !important;
+    }
+}
+

@@ -1,0 +1,375 @@
+"""
+Landing pre-login liviana: sin auth, database ni utils pesados (mejor FCP en PageSpeed).
+
+Se importa antes del resto de main.py para que visitantes anónimos no paguen el arranque completo.
+"""
+
+from __future__ import annotations
+
+import base64
+import html
+from pathlib import Path
+
+import streamlit as st
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+LANDING_CHROME_CSS = """
+            #MainMenu {visibility: hidden !important;}
+        /* Header: preservar DOM para boton hamburguesa en mobile */
+        header[data-testid="stHeader"] { height: 0 !important; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; background: transparent !important; }
+            [data-testid="stToolbar"],
+            [data-testid="stDecoration"] {display: none !important;}
+            div[data-testid="stToolbarActions"] {display: none !important;}
+            .stDeployButton,
+            [class*="stDeployButton"] {display: none !important;}
+            footer,
+            footer[data-testid="stFooter"] {visibility: hidden !important; height: 0 !important; min-height: 0 !important; overflow: hidden !important;}
+            html { overflow-x: hidden !important; scroll-behavior: smooth; }
+            body, .stApp { overflow-x: hidden !important; }
+            ::-webkit-scrollbar { width: 7px; background: rgba(5,8,18,0.6); }
+            ::-webkit-scrollbar-thumb { background: rgba(45,212,191,0.38); border-radius: 6px; }
+            ::-webkit-scrollbar-thumb:hover { background: rgba(45,212,191,0.62); }
+            .block-container {
+                padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+                padding-bottom: 0rem !important;
+                max-width: 100% !important;
+                margin-top: 0 !important;
+                overflow: visible !important;
+            }
+            .stApp {
+                background-color: #03050a !important;
+                background-image:
+                    radial-gradient(ellipse 100% 50% at 50% -15%, rgba(45, 212, 191, 0.08), transparent 50%),
+                    radial-gradient(circle at 92% 8%, rgba(96, 165, 250, 0.1), transparent 40%),
+                    linear-gradient(168deg, #03050a 0%, #060d18 100%) !important;
+            }
+            /* Sticky top-ingresar button — sin :has() para compatibilidad universal */
+            .block-container > div:first-of-type {
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 99999 !important;
+                background: rgba(3, 5, 10, 0.93) !important;
+                padding: 6px 0 !important;
+                backdrop-filter: blur(10px);
+                border-bottom: 1px solid rgba(45, 212, 191, 0.15);
+            }
+            .block-container > div:first-of-type div[data-testid="stButton"] {
+                display: flex; justify-content: center; margin-top: 18px; padding-bottom: 42px;
+            }
+            /* Selector muy especifico para vencer a app_theme.py */
+            .block-container > div:first-of-type div[data-testid="stButton"] > button[kind="primary"] {
+                min-height: 60px !important;
+                min-width: 320px !important;
+                padding: 0 34px !important;
+                border-radius: 9999px !important;
+                border: 1px solid rgba(186, 230, 253, 0.24) !important;
+                background:
+                    linear-gradient(135deg, rgba(18, 184, 166, 0.98) 0%, rgba(37, 99, 235, 0.98) 58%, rgba(56, 189, 248, 0.96) 100%) !important;
+                color: white !important;
+                font-size: 1rem !important;
+                font-weight: 900 !important;
+                text-transform: uppercase;
+                letter-spacing: 0.18em;
+                box-shadow:
+                    0 18px 42px rgba(14, 165, 233, 0.22),
+                    0 0 0 1px rgba(255,255,255,0.06) inset !important;
+                transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease !important;
+                backdrop-filter: blur(12px);
+            }
+            .block-container > div:first-of-type div[data-testid="stButton"] > button[kind="primary"]:hover {
+                transform: translateY(-3px) scale(1.01) !important;
+                filter: brightness(1.04) !important;
+                box-shadow:
+                    0 24px 54px rgba(56, 189, 248, 0.28),
+                    0 0 0 1px rgba(255,255,255,0.09) inset !important;
+            }
+"""
+
+
+def _query_flag(nombre: str) -> bool:
+    qp = getattr(st, "query_params", None)
+    if qp is None:
+        return False
+    try:
+        valor = qp.get(nombre)
+        if isinstance(valor, list):
+            valor = valor[0] if valor else ""
+        return str(valor or "").strip().lower() in {"1", "true", "si", "yes", "on"}
+    except Exception:
+        return False
+
+
+def ensure_entered_app_default() -> None:
+    """Portada por defecto; ?login=1 o ?directo=1 salta la publicidad (pruebas / acceso directo)."""
+    if "entered_app" not in st.session_state or _query_flag("login") or _query_flag("directo"):
+        st.session_state.entered_app = (
+            st.session_state.get("entered_app", False)
+            or _query_flag("login")
+            or _query_flag("directo")
+        )
+
+
+def obtener_logo_landing() -> str:
+    posibles = [
+        REPO_ROOT / "assets" / "logo_medicare_pro.jpeg",
+        REPO_ROOT / "assets" / "logo_medicare_pro.jpg",
+        REPO_ROOT / "assets" / "logo_medicare_pro.png",
+        REPO_ROOT / "logo_medicare_pro.jpeg",
+        REPO_ROOT / "logo_medicare_pro.jpg",
+        REPO_ROOT / "logo_medicare_pro.png",
+    ]
+    for ruta in posibles:
+        if ruta.exists():
+            mime = "image/png" if ruta.suffix.lower() == ".png" else "image/jpeg"
+            encoded = base64.b64encode(ruta.read_bytes()).decode()
+            return (
+                f"<img src='data:{mime};base64,{encoded}' "
+                "alt='MediCare Enterprise PRO — plataforma de salud domiciliaria y auditoría clínica' "
+                "width='112' height='112' decoding='async' fetchpriority='high' "
+                "style='height:112px;width:auto;border-radius:22px;box-shadow:0 15px 35px rgba(0,0,0,0.45),0 0 24px rgba(20,184,166,0.22);display:block;'>"
+            )
+
+    svg = """
+    <svg xmlns='http://www.w3.org/2000/svg' width='320' height='160' viewBox='0 0 320 160'>
+      <defs>
+        <linearGradient id='g1' x1='0%' y1='0%' x2='100%' y2='100%'>
+          <stop offset='0%' stop-color='#14b8a6'/>
+          <stop offset='100%' stop-color='#3b82f6'/>
+        </linearGradient>
+      </defs>
+      <rect x='18' y='18' width='284' height='124' rx='28' fill='#08111f'/>
+      <rect x='26' y='26' width='268' height='108' rx='24' fill='url(#g1)' opacity='0.12'/>
+      <circle cx='84' cy='80' r='30' fill='url(#g1)'/>
+      <path d='M74 80h20M84 70v20' stroke='#fff' stroke-width='8' stroke-linecap='round'/>
+      <text x='128' y='72' fill='#f8fafc' font-size='26' font-family='Inter, Arial, sans-serif' font-weight='700'>MediCare</text>
+      <text x='128' y='102' fill='#94a3b8' font-size='18' font-family='Inter, Arial, sans-serif' font-weight='600'>Enterprise PRO</text>
+    </svg>
+    """
+    encoded = base64.b64encode(svg.encode("utf-8")).decode()
+    return (
+        f"<img src='data:image/svg+xml;base64,{encoded}' "
+        "alt='MediCare Enterprise PRO — plataforma de salud domiciliaria y auditoría clínica' "
+        "width='284' height='124' decoding='async' fetchpriority='high' "
+        "style='height:112px;width:auto;display:block;'>"
+    )
+
+
+def render_publicidad_y_detener() -> None:
+    """
+    Muestra la landing y detiene el script. No importar módulos pesados antes de llamar esto.
+    """
+    from core.landing_publicidad import obtener_html_landing_publicidad
+    from core._ui_liviano_js import SIDEBAR_TOGGLE_JS
+
+    # CSS mejorado para la landing
+    st.markdown(f"""<style>
+    {LANDING_CHROME_CSS}
+    /* GPU-safe override para touch: sin blur, gradientes planos */
+    @media (hover: none) and (pointer: coarse) {{
+        .stApp {{ background: #03050a !important; }}
+        .block-container > div:first-of-type {{
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }}
+        .mc-lp-hero-title {{
+            background: none !important;
+            -webkit-text-fill-color: #f4f7fb !important;
+            color: #f4f7fb !important;
+        }}
+        .mc-lp-btn-primary {{
+            background: #2563eb !important;
+            box-shadow: none !important;
+        }}
+        .mc-lp-card {{
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: rgba(255,255,255,0.04) !important;
+            box-shadow: none !important;
+        }}
+        .mc-lp-sticky-btn-wrap a {{
+            background: #2563eb !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+        }}
+        *, *::before, *::after {{
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }}
+    }}
+    /* Mejoras visuales landing */
+    .mc-lp-hero-title {{
+        font-size: clamp(1.8rem, 4vw, 3.2rem) !important;
+        font-weight: 800 !important;
+        line-height: 1.1 !important;
+        background: linear-gradient(135deg, #f4f7fb 0%, #60a5fa 50%, #2dd4bf 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+    }}
+    .mc-lp-btn-primary {{
+        background: linear-gradient(135deg, #2563eb, #0ea5e9) !important;
+        border: none !important;
+        border-radius: 50px !important;
+        padding: 14px 36px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        box-shadow: 0 8px 30px rgba(14, 165, 233, 0.3) !important;
+        transition: all 0.3s ease !important;
+    }}
+    .mc-lp-btn-primary:hover {{
+        transform: translateY(-3px) !important;
+        box-shadow: 0 12px 40px rgba(14, 165, 233, 0.45) !important;
+    }}
+    .mc-lp-card {{
+        background: rgba(255,255,255,0.03) !important;
+        backdrop-filter: blur(12px) !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        border-radius: 20px !important;
+        padding: 24px !important;
+        transition: all 0.3s ease !important;
+    }}
+    .mc-lp-card:hover {{
+        transform: translateY(-5px) !important;
+        border-color: rgba(14,165,233,0.2) !important;
+        box-shadow: 0 12px 40px rgba(14,165,233,0.1) !important;
+    }}
+    @media (max-width: 768px) {{
+        .mc-lp-card {{
+            padding: 16px !important;
+        }}
+    }}
+    </style>""", unsafe_allow_html=True)
+
+    st.markdown(f"<style>{LANDING_CHROME_CSS}</style>", unsafe_allow_html=True)
+
+    # Botón principal: enlace HTML estilizado como botón (más confiable que st.button+st.rerun en Cloud)
+    st.markdown(
+        """
+        <style>
+        .mc-lp-sticky-btn-wrap {
+            position: sticky !important; top: 0 !important; z-index: 99999 !important;
+            background: rgba(3,5,10,0.93) !important; padding: 6px 0 !important;
+            border-bottom: 1px solid rgba(45,212,191,0.15) !important;
+            text-align: center;
+        }
+        .mc-lp-sticky-btns {
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+        .mc-lp-sticky-btn-wrap a {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 60px; min-width: 260px; padding: 0 30px;
+            border-radius: 9999px; border: 1px solid rgba(186,230,253,0.24);
+            background: linear-gradient(135deg, rgba(18,184,166,0.98) 0%, rgba(37,99,235,0.98) 58%, rgba(56,189,248,0.96) 100%);
+            color: #fff !important; font-size: 1rem; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 0.18em; text-decoration: none !important;
+            box-shadow: 0 18px 42px rgba(14,165,233,0.22), 0 0 0 1px rgba(255,255,255,0.06) inset;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+        }
+        .mc-lp-sticky-btn-wrap a:hover {
+            transform: translateY(-3px) scale(1.01);
+            filter: brightness(1.04);
+            box-shadow: 0 24px 54px rgba(56,189,248,0.28), 0 0 0 1px rgba(255,255,255,0.09) inset;
+        }
+        @media (max-width: 720px) {
+            .mc-lp-sticky-btn-wrap a {
+                min-height: 48px;
+                min-width: min(100%, 300px);
+                font-size: 0.78rem;
+                letter-spacing: 0.1em;
+            }
+        }
+        </style>
+        <div class="mc-lp-sticky-btn-wrap">
+            <div class="mc-lp-sticky-btns">
+                <a href="?login=1&amp;_mc_boot=1" target="_self">🚀 INGRESAR AL SISTEMA</a>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    logo_html = obtener_logo_landing()
+    _landing_html = obtener_html_landing_publicidad(logo_html)
+    if hasattr(st, "html"):
+        st.html(_landing_html)
+    else:
+        st.markdown(_landing_html, unsafe_allow_html=True)
+
+
+
+    # CSS para forzar visibilidad del botón nativo de Streamlit (hamburguesa >> / << sidebar)
+    # en mobile, ya que otros módulos ocultan el nativo con display:none
+    st.markdown(
+        """
+        <style>
+        /* En la landing mostramos el boton nativo de Streamlit para abrir/cerrar sidebar */
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="collapsedControl"],
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="stSidebarCollapseButton"],
+        button[kind="headerNoPadding"],
+        [aria-label="Open sidebar"],
+        [aria-label="Close sidebar"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        /* En mobile: la sidebar empieza colapsada; que el boton nativo sea visible */
+        @media (max-width: 768px) {
+            [data-testid="stSidebarCollapsedControl"] button,
+            [data-testid="stExpandSidebarButton"] button {
+                display: inline-flex !important;
+                visibility: visible !important;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <style>
+        @media (max-width: 768px) {
+            [data-testid="stSidebarCollapsedControl"],
+            [data-testid="collapsedControl"],
+            [data-testid="stExpandSidebarButton"],
+            [data-testid="stSidebarCollapseButton"],
+            button[kind="headerNoPadding"],
+            [aria-label="Open sidebar"],
+            [aria-label="Close sidebar"] {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Sidebar nativo para mobile: renderizar algo para que el sidebar DOM exista
+    # y Streamlit muestre la hamburguesa nativa en mobile
+    with st.sidebar:
+        st.markdown(
+            """
+            <div style="text-align:center;padding:12px 0 8px;">
+                <h3 style="color:#14b8a6;margin:0;font-size:1.1rem;">🏥 MediCare PRO</h3>
+                <p style="color:#94a3b8;font-size:0.78rem;margin:4px 0 0;">Acceso institucional</p>
+            </div>
+            <hr style="border-color:rgba(148,163,184,0.15);margin:8px 0;">
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "<a href='?login=1&amp;_mc_boot=1' target='_self' style='display:block;text-align:center;padding:10px 0;border-radius:12px;background:linear-gradient(135deg,#14b8a6,#2563eb);color:#fff!important;text-decoration:none!important;font-weight:700;font-size:0.92rem;'>🚀 Ingresar al sistema</a>",
+            unsafe_allow_html=True,
+        )
+
+    st.stop()

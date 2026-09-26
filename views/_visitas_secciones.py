@@ -1,0 +1,652 @@
+"""Secciones UI de visitas. Extraído de views/visitas.py."""
+
+from __future__ import annotations
+
+import urllib.parse
+from datetime import datetime, timedelta
+
+import pandas as pd
+import streamlit as st
+
+from core.app_logging import log_event
+from core.alert_toasts import queue_toast
+from core.database import guardar_datos
+from core.view_helpers import bloque_estado_vacio
+from core.utils import (
+    ahora,
+    mostrar_dataframe_con_scroll,
+    normalizar_hora_texto,
+    obtener_direccion_real,
+    obtener_profesionales_visibles,
+    seleccionar_limite_registros,
+    es_control_total,
+)
+from views._visitas_whatsapp import (
+    _armar_mensaje_whatsapp_visita,
+    _etiqueta_visita_whatsapp,
+    _normalizar_telefono_whatsapp,
+    _plantillas_whatsapp_para_empresa,
+    _plantillas_whatsapp_store,
+    _visitas_para_aviso_whatsapp,
+)
+from views._visitas_agenda import _agenda_empresa, _zona_corta
+
+_CHECKINS_SQL_STATUS_KEY = "_mc_checkins_sql_status"
+
+
+def registrar_estado_checkins_sql(
+    session_state: dict,
+    *,
+    ok: bool,
+    empresa: str,
+    rows: int = 0,
+    error: Exception | None = None,
+) -> dict:
+    """Deja un diagnostico breve de la lectura SQL de fichadas/checkins."""
+    status = {
+        "ok": bool(ok),
+        "empresa": str(empresa or ""),
+        "rows": int(rows or 0),
+        "fallback": None if ok else "local",
+    }
+    if error is not None:
+        status["error_type"] = type(error).__name__
+        status["error"] = str(error)[:180]
+    session_state[_CHECKINS_SQL_STATUS_KEY] = status
+    return status
+
+
+def estado_checkins_sql(session_state: dict) -> dict:
+    status = session_state.get(_CHECKINS_SQL_STATUS_KEY)
+    return status if isinstance(status, dict) else {}
+
+
+GEO_DISPONIBLE = False
+try:
+    from streamlit_geolocation import streamlit_geolocation
+    GEO_DISPONIBLE = True
+except ImportError:
+    pass  # Intencional: geolocación es opcional para fichadas
+
+
+def _registrar_fichada(paciente_sel, mi_empresa, nombre_usuario, tipo, lat, lon, direccion):
+    """Registra una fichada (LLEGADA/SALIDA) en Supabase y session_state."""
+    _sql_ok = False
+    try:
+        from core.db_sql import insert_checkin
+        from core.nextgen_sync import _obtener_uuid_empresa, _obtener_uuid_paciente
+        from core.database import supabase
+        empresa_id = _obtener_uuid_empresa(mi_empresa)
+        if empresa_id:
+            pac_uuid = None
+            partes = paciente_sel.split(" - ")
+            if len(partes) > 1:
+                pac_uuid = _obtener_uuid_paciente(partes[1].strip(), empresa_id)
+            usr_id = None
+            if supabase:
+                _usr_cache = f"_cache_usr_id_{nombre_usuario}_{empresa_id}"
+                if _usr_cache in st.session_state:
+                    usr_id = st.session_state[_usr_cache]
+                else:
+                    res_usr = supabase.table("usuarios").select("id").eq("nombre", nombre_usuario).eq("empresa_id", empresa_id).limit(1).execute()
+                    if getattr(res_usr, "data", None):
+                        usr_id = res_usr.data[0]["id"]
+                        st.session_state[_usr_cache] = usr_id
+            datos_sql = {
+                "empresa_id": empresa_id,
+                "usuario_id": usr_id,
+                "paciente_id": pac_uuid,
+                "fecha_hora": ahora().isoformat(),
+                "tipo_registro": tipo,
+                "latitud": float(lat),
+                "longitud": float(lon),
+                "direccion_estimada": direccion,
+                "observaciones": "Manual" if lat == 0.0 and lon == 0.0 else ""
+            }
+            insert_checkin(datos_sql)
+            _sql_ok = True
+    except Exception as e:
+        log_event("visitas_sql", f"error_dual_write_checkin_{tipo.lower()}:{type(e).__name__}")
+
+    # Guardia por paciente (no global)
+    _gk = f"_guardia_{paciente_sel}"
+    if tipo == "LLEGADA":
+        st.session_state.setdefault(_gk, {"activa": True, "inicio": ahora().isoformat()})
+    elif tipo == "SALIDA":
+        _guardia = st.session_state.get(_gk, {})
+        if _guardia.get("activa"):
+            _guardia["activa"] = False
+            _guardia["fin"] = ahora().isoformat()
+            st.session_state[_gk] = _guardia
+
+    if "checkin_db" not in st.session_state or not isinstance(st.session_state["checkin_db"], list):
+        st.session_state["checkin_db"] = []
+    st.session_state["checkin_db"].append({
+        "paciente": paciente_sel,
+        "profesional": nombre_usuario,
+        "fecha_hora": ahora().strftime("%d/%m/%Y %H:%M:%S"),
+        "tipo": f"{tipo} en: {direccion} (Lat: {lat:.5f})",
+        "empresa": mi_empresa,
+        "gps": f"{lat:.5f},{lon:.5f}"
+    })
+    from core.database import _trim_db_list
+    _trim_db_list("checkin_db", 1000)
+    guardar_datos(spinner=True)
+    if _sql_ok:
+        queue_toast(f"{tipo} registrada (servidor + local).")
+    else:
+        queue_toast(f"{tipo} registrada (solo local, servidor no disponible).")
+    st.rerun()
+
+
+def _hora_en_ventana(item, hora_dt, ventana):
+    """Check if an agenda item's time falls within `ventana` of `hora_dt`."""
+    try:
+        item_fh = item.get("fecha_hora_programada", "")
+        if not item_fh:
+            return False
+        item_dt = datetime.strptime(item_fh[:19], "%Y-%m-%d %H:%M:%S")
+        return abs(item_dt - hora_dt) <= ventana
+    except (ValueError, TypeError):
+        return False
+
+
+_AGENDA_CACHE_PREFIX = "_agenda_cache_"
+
+
+def _render_fichada_gps(paciente_sel, mi_empresa, nombre_usuario):
+    """Sección: Fichada Legal de Visita (GPS Real) + Control de Horas."""
+    st.subheader("Fichada Legal de Visita (GPS Real)")
+    lat, lon, direccion = None, None, "Ubicacion Omitida"
+
+    if GEO_DISPONIBLE:
+        st.info("Para fichar llegada o salida, activa la ubicacion solo cuando la necesites.")
+        activar_gps = st.checkbox("Activar GPS y obtener mi ubicacion")
+        if activar_gps:
+            try:
+                loc = streamlit_geolocation()
+            except Exception:
+                loc = None
+                st.warning("No se pudo inicializar el componente GPS.")
+            if loc:
+                lat = loc.get("latitude")
+                lon = loc.get("longitude")
+            if lat is not None and lon is not None:
+                lat_str = f"{float(lat):.5f}"
+                lon_str = f"{float(lon):.5f}"
+                direccion = obtener_direccion_real(lat_str, lon_str)
+                st.success(f"Estas fisicamente en: {direccion}")
+            else:
+                st.warning("Buscando senal GPS. Asegurate de permitir ubicacion, o usa el boton manual.")
+    else:
+        st.warning("Libreria de geolocalizacion no disponible. Podes fichar manualmente.")
+
+    # Valores finales: GPS si disponible, sino manual (0.0, 0.0)
+    lat_val = float(lat) if lat is not None else 0.0
+    lon_val = float(lon) if lon is not None else 0.0
+    direccion_final = direccion if lat is not None else "Ubicacion Omitida"
+
+    col_in, col_out = st.columns(2)
+    if col_in.button("Fichar LLEGADA", use_container_width=True, type="primary"):
+        try:
+            _registrar_fichada(paciente_sel, mi_empresa, nombre_usuario, "LLEGADA", lat_val, lon_val, direccion_final)
+        except Exception as e:
+            log_event("visitas", f"error_fichada_llegada:{type(e).__name__}:{e}")
+            st.error(f"Error al registrar llegada: {e}")
+    if col_out.button("Fichar SALIDA", use_container_width=True):
+        try:
+            _registrar_fichada(paciente_sel, mi_empresa, nombre_usuario, "SALIDA", lat_val, lon_val, direccion_final)
+        except Exception as e:
+            log_event("visitas", f"error_fichada_salida:{type(e).__name__}:{e}")
+            st.error(f"Error al registrar salida: {e}")
+
+    st.divider()
+    st.markdown("#### Control de Horas de Guardia (Hoy)")
+    hoy_str = ahora().strftime("%d/%m/%Y")
+    fichadas_hoy = []
+    chk_sql = None
+    try:
+        from core.db_sql import get_checkins_by_empresa
+        from core.nextgen_sync import _obtener_uuid_empresa
+        empresa_uuid = _obtener_uuid_empresa(mi_empresa)
+        if empresa_uuid:
+            chk_sql = get_checkins_by_empresa(empresa_uuid, limit=500)
+            registrar_estado_checkins_sql(st.session_state, ok=True, empresa=mi_empresa, rows=len(chk_sql or []))
+            if chk_sql:
+                _pac_norm = paciente_sel.strip().lower()
+                _prof_norm = nombre_usuario.strip().lower()
+                for c in chk_sql:
+                    dt = pd.to_datetime(c.get("fecha_hora", ""), errors="coerce")
+                    if pd.notnull(dt) and dt.strftime("%d/%m/%Y") == hoy_str:
+                        paciente_nombre = c.get("pacientes", {}).get("nombre_completo", "") if isinstance(c.get("pacientes"), dict) else ""
+                        prof_nombre = c.get("usuarios", {}).get("nombre", "") if isinstance(c.get("usuarios"), dict) else ""
+                        if _pac_norm.startswith(paciente_nombre.strip().lower()) and prof_nombre.strip().lower() == _prof_norm:
+                            fichadas_hoy.append({
+                                "paciente": paciente_sel,
+                                "profesional": nombre_usuario,
+                                "fecha_hora": dt.strftime("%d/%m/%Y %H:%M:%S"),
+                                "tipo": c.get("tipo_registro", ""),
+                                "empresa": mi_empresa,
+                            })
+        else:
+            registrar_estado_checkins_sql(st.session_state, ok=False, empresa=mi_empresa, rows=0)
+    except Exception as e:
+        log_event("visitas_sql", f"error_lectura_checkins:{type(e).__name__}")
+        registrar_estado_checkins_sql(st.session_state, ok=False, empresa=mi_empresa, rows=0, error=e)
+    if not fichadas_hoy:
+        fichadas_hoy = [
+            c for c in st.session_state.get("checkin_db", [])
+            if c.get("paciente") == paciente_sel and c.get("profesional") == nombre_usuario and c.get("fecha_hora", "").startswith(hoy_str)
+        ]
+    checkins_status = estado_checkins_sql(st.session_state)
+    if checkins_status and not checkins_status.get("ok"):
+        st.info("Modo local/cache activo para fichadas. Los registros se guardaran en la sesion actual si la conexion no responde.")
+    elif not fichadas_hoy and chk_sql is None:
+        st.info("Sincronización con servidor en pausa (Modo Local). Los registros se guardarán en la sesión actual.")
+    if fichadas_hoy:
+        fichadas_hoy = sorted(fichadas_hoy, key=lambda x: pd.to_datetime(x.get("fecha_hora", ""), format="%d/%m/%Y %H:%M:%S", errors="coerce"))
+        llegada_time = None
+        ahora_naive = ahora().replace(tzinfo=None)
+        for f in fichadas_hoy:
+            dt = pd.to_datetime(f.get("fecha_hora", ""), format="%d/%m/%Y %H:%M:%S", errors="coerce")
+            if pd.isna(dt):
+                dt = pd.to_datetime(f.get("fecha_hora", ""), format="%d/%m/%Y %H:%M", errors="coerce")
+            if pd.isna(dt):
+                continue
+            dt = dt.to_pydatetime()
+            if "LLEGADA" in str(f.get("tipo", "")).upper():
+                llegada_time = dt
+            elif "SALIDA" in str(f.get("tipo", "")).upper() and llegada_time:
+                duracion = dt - llegada_time
+                horas, rem = divmod(duracion.seconds, 3600)
+                minutos, _ = divmod(rem, 60)
+                st.success(f"Turno completado: {llegada_time.strftime('%H:%M')} -> {dt.strftime('%H:%M')} ({horas}h {minutos}m)")
+                llegada_time = None
+        if llegada_time:
+            duracion_actual = ahora_naive - llegada_time
+            horas, rem = divmod(duracion_actual.seconds, 3600)
+            minutos, _ = divmod(rem, 60)
+            st.warning(f"Guardia en curso desde las {llegada_time.strftime('%H:%M')} -> {horas}h {minutos}m")
+    else:
+        bloque_estado_vacio(
+            "Sin fichadas hoy",
+            "Todavía no hay llegadas ni salidas registradas hoy para este paciente.",
+            sugerencia="Usá Fichar LLEGADA/SALIDA cuando corresponda (con ubicación si aplica).",
+        )
+
+
+def _render_agendar_visita(paciente_sel, mi_empresa, user, rol, agenda_paciente, nombre_usuario, nombre_corto_pac, dire_paciente, tel_paciente):
+    """Sección: Agendar Próxima Visita."""
+    st.divider()
+    st.subheader("Agendar Proxima Visita")
+    profesionales = sorted({
+        str(v.get("nombre", "")).strip()
+        for v in obtener_profesionales_visibles(
+            st.session_state, mi_empresa, rol,
+            roles_validos=["Operativo", "Enfermeria", "Medico", "Coordinador", "SuperAdmin"],
+        )
+        if str(v.get("nombre", "")).strip()
+    })
+    if not profesionales and user.get("nombre"):
+        profesionales = [nombre_usuario]
+    if not profesionales:
+        bloque_estado_vacio(
+            "Sin profesionales para asignar",
+            "No hay profesionales visibles con permisos para visitas.",
+            sugerencia="Revisá Mi Equipo y roles (Operativo, Enfermería, Médico, Coordinador).",
+        )
+    else:
+        ofrecer_wpp_tras_agendar = st.checkbox(
+            "Al agendar una visita nueva, ofrecer recordatorio para WhatsApp",
+            value=True,
+            key=f"wpp_tras_agendar_{paciente_sel}",
+        )
+        with st.form("agenda_form", clear_on_submit=True):
+            c1_ag, c2_ag = st.columns(2)
+            fecha_ag = c1_ag.date_input("Fecha programada", value=ahora().date())
+            hora_ag = c2_ag.time_input(
+                "Hora aproximada (HH:MM)",
+                value=ahora().replace(second=0, microsecond=0).time(),
+                step=300,
+            )
+            idx_prof = profesionales.index(nombre_usuario) if nombre_usuario in profesionales else 0
+            prof_ag = st.selectbox("Asignar Profesional", profesionales, index=idx_prof)
+            if st.form_submit_button("Agendar Visita", use_container_width=True, type="primary"):
+                _fh_prog = datetime.combine(fecha_ag, hora_ag)
+                if _fh_prog < ahora().replace(tzinfo=None) - timedelta(hours=1):
+                    log_event("visitas", "error: No se puede agendar una visita en el pasado. Corregi la fecha u hora.")
+                    st.error("No se puede agendar una visita en el pasado. Corregi la fecha u hora.")
+                    st.stop()
+                    return
+                hora_limpia = normalizar_hora_texto(hora_ag.strftime("%H:%M"), default=ahora().strftime("%H:%M"))
+                fecha_ag_str = fecha_ag.strftime("%d/%m/%Y")
+                fecha_hora_programada = _fh_prog.strftime("%Y-%m-%d %H:%M:%S")
+                _agenda_cache_key = _AGENDA_CACHE_PREFIX + mi_empresa
+                if _agenda_cache_key in st.session_state:
+                    del st.session_state[_agenda_cache_key]
+                _hora_dt = _fh_prog
+                _ventana_30 = timedelta(minutes=30)
+                _agenda_actual = _agenda_empresa(mi_empresa, rol)
+                _pendientes_local = st.session_state.get("agenda_db", [])
+                _todos = _agenda_actual + _pendientes_local
+                conflicto = next(
+                    (
+                        item for item in _todos
+                        if item.get("profesional") == prof_ag
+                        and item.get("fecha") == fecha_ag_str
+                        and item.get("estado", "Pendiente") not in {"Cancelada", "Realizada"}
+                        and item.get("paciente") != paciente_sel
+                    ),
+                    None,
+                )
+                if not conflicto:
+                    conflicto = next(
+                        (
+                            item for item in _todos
+                            if item.get("profesional") == prof_ag
+                            and item.get("fecha") == fecha_ag_str
+                            and item.get("estado", "Pendiente") not in {"Cancelada", "Realizada"}
+                            and item.get("paciente") != paciente_sel
+                            and _hora_en_ventana(item, _hora_dt, _ventana_30)
+                        ),
+                        None,
+                    )
+                if conflicto:
+                    log_event("visitas", f"error: {prof_ag} ya tiene una visita activa en ese horario con {conflicto.get('paciente', 'otro paciente')}.")
+                    st.error(f"{prof_ag} ya tiene una visita activa en ese horario con {conflicto.get('paciente', 'otro paciente')}.")
+                else:
+                    if "agenda_db" not in st.session_state or not isinstance(st.session_state["agenda_db"], list):
+                        st.session_state["agenda_db"] = []
+                    st.session_state["agenda_db"].append({
+                        "paciente": paciente_sel,
+                        "profesional": prof_ag,
+                        "fecha": fecha_ag_str,
+                        "fecha_programada": fecha_ag_str,
+                        "fecha_hora_programada": fecha_hora_programada,
+                        "hora": hora_limpia,
+                        "empresa": mi_empresa,
+                        "estado": "Pendiente",
+                        "zona": _zona_corta(dire_paciente),
+                        "creado_por": user.get("nombre", ""),
+                        "creado_en": ahora().strftime("%d/%m/%Y %H:%M:%S"),
+                    })
+                    from core.database import _trim_db_list
+                    _trim_db_list("agenda_db", 500)
+                    try:
+                        from core.db_sql import insert_turno
+                        from core.nextgen_sync import _obtener_uuid_empresa, _obtener_uuid_paciente
+                        partes = paciente_sel.split(" - ")
+                        if len(partes) > 1:
+                            dni = partes[1].strip()
+                            empresa_id = _obtener_uuid_empresa(mi_empresa)
+                            if empresa_id:
+                                pac_uuid = _obtener_uuid_paciente(dni, empresa_id)
+                                if pac_uuid:
+                                    from core.database import supabase
+                                    prof_id = None
+                                    if supabase:
+                                        _prof_cache = f"_cache_prof_id_{prof_ag}_{empresa_id}"
+                                        if _prof_cache in st.session_state:
+                                            prof_id = st.session_state[_prof_cache]
+                                        else:
+                                            res_prof = supabase.table("usuarios").select("id").eq("nombre", prof_ag).eq("empresa_id", empresa_id).limit(1).execute()
+                                            if res_prof.data:
+                                                prof_id = res_prof.data[0]["id"]
+                                                st.session_state[_prof_cache] = prof_id
+                                    datos_sql = {
+                                        "paciente_id": pac_uuid,
+                                        "empresa_id": empresa_id,
+                                        "profesional_id": prof_id,
+                                        "fecha_hora_programada": fecha_hora_programada,
+                                        "estado": "Pendiente"
+                                    }
+                                    insert_turno(datos_sql)
+                    except Exception as e:
+                        log_event("visitas_sql", f"error_dual_write_turno:{type(e).__name__}")
+                    guardar_datos(spinner=True)
+                    tel_n = _normalizar_telefono_whatsapp(tel_paciente)
+                    if ofrecer_wpp_tras_agendar and tel_n:
+                        pls = _plantillas_whatsapp_para_empresa(mi_empresa)
+                        nueva = {"fecha": fecha_ag_str, "hora": hora_limpia, "profesional": prof_ag}
+                        txt = _armar_mensaje_whatsapp_visita(
+                            paciente_sel, mi_empresa, user, nueva, nombre_corto_pac, dire_paciente, plantillas_empresa=pls
+                        )
+                        st.session_state["_wpp_recordatorio_visita"] = {
+                            "paciente": paciente_sel,
+                            "tel": tel_n,
+                            "texto": txt,
+                        }
+                    queue_toast(f"Visita agendada para el {fecha_ag_str} a las {hora_limpia} hs.")
+                    st.rerun()
+
+
+def _render_whatsapp_agenda(paciente_sel, mi_empresa, user, rol, agenda_paciente, nombre_corto_pac, dire_paciente, tel_paciente):
+    """Sección: Aviso WhatsApp + Agenda inteligente."""
+    st.divider()
+    st.subheader("Aviso de visita por WhatsApp")
+    st.caption("Elegi la visita a informar, revisa o edita el texto y abri WhatsApp con el mensaje listo para enviar.")
+    if es_control_total(rol):
+        gestionar_tpl = st.checkbox(
+            "Gestionar plantillas de mensaje para esta clinica (opcional)",
+            value=False,
+            key=f"wpp_gestion_tpl_{mi_empresa}",
+        )
+        if gestionar_tpl:
+            emp_tpl = _plantillas_whatsapp_para_empresa(mi_empresa)
+            st.caption(
+                "Placeholders: {paciente} {empresa} {fecha} {hora} {profesional} {mat_profesional} "
+                "{domicilio} {contacto} {rol_contacto} {mat_contacto}. Si dejas vacio, se usa el texto automatico."
+            )
+            tv = st.text_area("Plantilla con visita concreta (fecha y hora)", value=emp_tpl.get("visita", ""), height=140, key=f"wpp_tpl_visita_edit_{mi_empresa}")
+            tg = st.text_area("Plantilla sin fecha puntual (coordinacion general)", value=emp_tpl.get("general", ""), height=120, key=f"wpp_tpl_general_edit_{mi_empresa}")
+            if st.button("Guardar plantillas en la clinica", use_container_width=True, key=f"wpp_tpl_save_{mi_empresa}", type="primary"):
+                _plantillas_whatsapp_store()[str(mi_empresa or "").strip() or "_default"] = {
+                    "visita": str(tv).strip(),
+                    "general": str(tg).strip(),
+                }
+                guardar_datos(spinner=True)
+                queue_toast("Plantillas guardadas.")
+                st.rerun()
+    ahora_naive_wa = ahora().replace(tzinfo=None)
+    visitas_wa = _visitas_para_aviso_whatsapp(agenda_paciente, ahora_naive_wa)
+    etiquetas_wa = [_etiqueta_visita_whatsapp(v) for v in visitas_wa] + ["Coordinacion general (sin visita puntual)"]
+    sel_key = f"wpp_visita_pick_{paciente_sel}"
+    prev_key = f"_wpp_visita_prev_{paciente_sel}"
+    msg_template_key = f"_wpp_msg_template_{paciente_sel}"
+    msg_key = f"wpp_visita_text_{paciente_sel}"
+    if prev_key not in st.session_state:
+        st.session_state[prev_key] = None
+    pick_wa = st.selectbox("Visita a comunicar al paciente", range(len(etiquetas_wa)), format_func=lambda i: etiquetas_wa[i], key=sel_key)
+    visita_elegida = visitas_wa[pick_wa] if pick_wa < len(visitas_wa) else None
+    pls_msg = _plantillas_whatsapp_para_empresa(mi_empresa)
+    if st.session_state[prev_key] != pick_wa:
+        st.session_state[msg_template_key] = _armar_mensaje_whatsapp_visita(
+            paciente_sel, mi_empresa, user, visita_elegida, nombre_corto_pac, dire_paciente, plantillas_empresa=pls_msg
+        )
+        st.session_state.pop(msg_key, None)
+        st.session_state[prev_key] = pick_wa
+    if msg_key not in st.session_state:
+        st.session_state[msg_key] = st.session_state.get(msg_template_key, "")
+    st.text_area("Texto del mensaje", key=msg_key, height=200)
+    texto_final_wa = st.session_state.get(msg_key, "").strip()
+
+    _wpp_num_key = f"_wpp_num_manual_{paciente_sel}"
+    _wpp_default = tel_paciente if tel_paciente else st.session_state.get(_wpp_num_key, "")
+    tel_manual = st.text_input("Telefono del paciente (WhatsApp)", value=_wpp_default, key=_wpp_num_key, placeholder="Ej: 5493584302024")
+    tel_destino = _normalizar_telefono_whatsapp(tel_manual) or tel_manual.replace(" ", "").replace("-", "")
+    c_w1, c_w2 = st.columns([1, 1])
+    with c_w1:
+        if tel_destino and texto_final_wa:
+            link_wpp = f"https://wa.me/{tel_destino}?text={urllib.parse.quote(texto_final_wa)}"
+            res = st.link_button("Enviar mensaje por WhatsApp", link_wpp, use_container_width=True, type="primary")
+            if res:
+                st.session_state["_ultimo_mensaje_wa"] = {
+                    "paciente": paciente_sel,
+                    "texto": texto_final_wa,
+                    "tel": tel_destino,
+                }
+        elif not tel_destino:
+            st.warning("Ingresa un numero de telefono.")
+    with c_w2:
+        if tel_destino:
+            link_abrir = f"https://wa.me/{tel_destino}"
+            st.link_button("Abrir WhatsApp (solo numero)", link_abrir, use_container_width=True)
+        _wa_ultimo = st.session_state.get("_ultimo_mensaje_wa")
+        if _wa_ultimo and _wa_ultimo.get("paciente") == paciente_sel:
+            st.link_button(
+                "Reenviar ultimo mensaje",
+                f"https://wa.me/{_wa_ultimo['tel']}?text={urllib.parse.quote(_wa_ultimo['texto'])}",
+                use_container_width=True,
+            )
+
+    if agenda_paciente:
+        st.divider()
+        from core.view_helpers import lista_plegable
+        with lista_plegable("Agenda inteligente — gráficos, filtros y tablas", count=len(agenda_paciente), expanded=False, height=None):
+            st.caption("Expandí para ver barras de estado, acciones rápidas, semana y tablas sin alargar toda la página.")
+            st.markdown("#### Agenda inteligente")
+            df_agenda = pd.DataFrame(agenda_paciente)
+            def _fmt_fecha_agenda(x):
+                try:
+                    return x.strftime("%d/%m/%Y %H:%M") if hasattr(x, "year") and x.year > 1900 else "Sin fecha"
+                except Exception:
+                    return "Sin fecha"
+            df_agenda["Fecha y Hora"] = df_agenda["_fecha_dt"].apply(_fmt_fecha_agenda)
+            df_agenda["Profesional"] = df_agenda["profesional"].fillna("Sin profesional")
+            df_agenda["Estado"] = df_agenda["estado_calc"]
+            busqueda_ag = st.text_input("🔍 Buscar turno", placeholder="Profesional, estado o fecha...", key=f"agenda_busq_{paciente_sel}").strip().lower()
+            c_f1, c_f2 = st.columns(2)
+            profesionales_disp = ["Todos"] + sorted(df_agenda["Profesional"].dropna().unique().tolist())
+            estados_disp = ["Todos", "Pendiente", "En curso", "Vencida", "Realizada", "Cancelada"]
+            filtro_prof = c_f1.selectbox("Filtrar por profesional", profesionales_disp, key=f"agenda_prof_{paciente_sel}")
+            filtro_estado = c_f2.selectbox("Filtrar por estado", estados_disp, key=f"agenda_estado_{paciente_sel}")
+            df_filtrado = df_agenda.copy()
+            if filtro_prof != "Todos":
+                df_filtrado = df_filtrado[df_filtrado["Profesional"] == filtro_prof]
+            if filtro_estado != "Todos":
+                df_filtrado = df_filtrado[df_filtrado["Estado"] == filtro_estado]
+            if busqueda_ag:
+                mask = (
+                    df_filtrado["Profesional"].str.lower().str.contains(busqueda_ag, na=False)
+                    | df_filtrado["Estado"].str.lower().str.contains(busqueda_ag, na=False)
+                    | df_filtrado["Fecha y Hora"].str.lower().str.contains(busqueda_ag, na=False)
+                )
+                df_filtrado = df_filtrado[mask]
+                st.caption(f"{len(df_filtrado)} resultado(s) para '{busqueda_ag}'")
+            col_g1, col_g2 = st.columns([1.1, 1])
+            with col_g1:
+                st.caption("Estado de la agenda del paciente")
+                estado_chart = df_agenda.groupby("Estado").size().reset_index(name="Visitas")
+                if not estado_chart.empty:
+                    st.bar_chart(estado_chart.set_index("Estado")["Visitas"], use_container_width=True)
+            with col_g2:
+                st.caption("Carga por profesional")
+                prof_chart = df_agenda.groupby("Profesional").size().reset_index(name="Visitas").sort_values("Visitas", ascending=False)
+                if not prof_chart.empty:
+                    st.bar_chart(prof_chart.set_index("Profesional")["Visitas"], use_container_width=True)
+            c_a1, c_a2 = st.columns([2, 1])
+            opciones_accion = [f"{x['Fecha y Hora']} | {x['Profesional']} | {x['Estado']}" for _, x in df_filtrado.sort_values("_fecha_dt").iterrows()]
+            seleccion = c_a1.selectbox("Accion rapida sobre una visita", ["Sin cambios"] + opciones_accion, key=f"agenda_accion_sel_{paciente_sel}")
+            accion = c_a2.selectbox("Accion", ["Marcar realizada", "Cancelar"], key=f"agenda_accion_tipo_{paciente_sel}")
+            _confirm_key = f"_agenda_confirm_{paciente_sel}"
+            if _confirm_key not in st.session_state:
+                st.session_state[_confirm_key] = False
+            if st.button("Aplicar cambio de agenda", use_container_width=True, key=f"agenda_apply_{paciente_sel}"):
+                if seleccion == "Sin cambios":
+                    st.warning("Selecciona una visita primero.")
+                elif not st.session_state[_confirm_key]:
+                    st.session_state[_confirm_key] = True
+                    st.rerun()
+                else:
+                    st.session_state[_confirm_key] = False
+                    def _fmt_sel(dt):
+                        try:
+                            return dt.strftime("%d/%m/%Y %H:%M") if hasattr(dt, "year") and dt.year > 1900 else "Sin fecha"
+                        except Exception:
+                            return "Sin fecha"
+                    objetivo = next(
+                        (x for x in agenda_paciente if f"{_fmt_sel(x.get('_fecha_dt'))} | {x.get('profesional', 'Sin profesional')} | {x.get('estado_calc', '')}" == seleccion),
+                        None,
+                    )
+                    if objetivo:
+                        if objetivo.get("id_sql"):
+                            try:
+                                from core.db_sql import update_estado_turno
+                                nuevo_estado = "Realizada" if accion == "Marcar realizada" else "Cancelada"
+                                update_estado_turno(objetivo["id_sql"], nuevo_estado)
+                            except Exception as e:
+                                from core.app_logging import log_event
+                                log_event("visitas_sql", f"error_dual_write_update_turno:{type(e).__name__}")
+                        for item in st.session_state.get("agenda_db", []):
+                            if (
+                                item.get("paciente") == objetivo.get("paciente")
+                                and item.get("profesional") == objetivo.get("profesional")
+                                and item.get("fecha") == objetivo.get("fecha")
+                                and normalizar_hora_texto(item.get("hora", ""), default="") == normalizar_hora_texto(objetivo.get("hora", ""), default="")
+                            ):
+                                item["estado"] = "Realizada" if accion == "Marcar realizada" else "Cancelada"
+                                break
+                    with st.spinner("Guardando..."):
+                        guardar_datos()
+                        queue_toast("Agenda actualizada correctamente.")
+                        st.rerun()
+            if st.session_state[_confirm_key]:
+                st.warning(f"Confirmar: presiona nuevamente 'Aplicar cambio' para {accion.lower()} la visita seleccionada.")
+            st.markdown("##### Agenda semanal del paciente")
+            semana_ref = st.date_input("Semana de referencia", value=ahora().date(), key=f"agenda_semana_ref_{paciente_sel}")
+            inicio_semana = semana_ref - timedelta(days=semana_ref.weekday())
+            fin_semana = inicio_semana + timedelta(days=6)
+            agenda_semana = [item for item in agenda_paciente if item["_fecha_dt"] != datetime.min and inicio_semana <= item["_fecha_dt"].date() <= fin_semana]
+            st.markdown("""<style>.mc-agenda-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}@media(max-width:640px){.mc-agenda-grid{grid-template-columns:repeat(3,1fr);}}</style>""", unsafe_allow_html=True)
+            cols_semana = st.columns(1)
+            with cols_semana[0]:
+                st.markdown('<div class="mc-agenda-grid">', unsafe_allow_html=True)
+                for idx_dia in range(7):
+                    dia = inicio_semana + timedelta(days=idx_dia)
+                    items_dia = [x for x in agenda_semana if x["_fecha_dt"].date() == dia]
+                    pendientes_dia = sum(1 for x in items_dia if x["estado_calc"] in {"Pendiente", "En curso", "Vencida"})
+                    realizadas_dia = sum(1 for x in items_dia if x["estado_calc"] == "Realizada")
+                    st.markdown(
+                        f"""
+                        <div style="background:rgba(30,41,59,0.6);border-radius:10px;padding:10px 8px;text-align:center;min-height:100px;">
+                            <div style="font-size:0.72rem;color:#93c5fd;text-transform:uppercase;letter-spacing:1px;">{dia.strftime('%a')}</div>
+                            <div style="font-size:0.85rem;font-weight:700;color:#f8fafc;margin-top:3px;">{dia.strftime('%d/%m')}</div>
+                            <div style="font-size:1.3rem;font-weight:900;color:#fff;margin-top:6px;">{len(items_dia)}</div>
+                            <div style="font-size:0.75rem;color:#cbd5e1;margin-top:3px;">{pendientes_dia} pend<br>{realizadas_dia} real</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                st.markdown('</div>', unsafe_allow_html=True)
+            if agenda_semana:
+                df_semana = pd.DataFrame(agenda_semana)
+                def _fmt_dia(x):
+                    try:
+                        return x.strftime("%A") if hasattr(x, "strftime") and x != datetime.min else "Sin fecha"
+                    except Exception:
+                        return "Sin fecha"
+                def _fmt_fecha(x):
+                    try:
+                        return x.strftime("%d/%m/%Y") if hasattr(x, "strftime") and x != datetime.min else "Sin fecha"
+                    except Exception:
+                        return "Sin fecha"
+                def _fmt_hora(x):
+                    try:
+                        return x.strftime("%H:%M") if hasattr(x, "strftime") and x != datetime.min else "--:--"
+                    except Exception:
+                        return "--:--"
+                df_semana["Dia"] = df_semana["_fecha_dt"].apply(_fmt_dia)
+                df_semana["Fecha"] = df_semana["_fecha_dt"].apply(_fmt_fecha)
+                df_semana["Hora"] = df_semana["_fecha_dt"].apply(_fmt_hora)
+                df_semana["Profesional"] = df_semana["profesional"].fillna("Sin profesional")
+                df_semana["Zona"] = df_semana.get("zona", pd.Series(["Zona sin definir"] * len(df_semana))).fillna("Zona sin definir")
+                df_semana["Estado"] = df_semana["estado_calc"]
+                df_semana = df_semana[["Dia", "Fecha", "Hora", "Profesional", "Zona", "Estado"]].sort_values(["Fecha", "Hora"])
+                limite_semana = seleccionar_limite_registros("Filas de la semana", len(df_semana), key=f"agenda_semana_limit_{paciente_sel}", default=14, opciones=(7, 14, 21, 35, 50))
+                mostrar_dataframe_con_scroll(df_semana.head(limite_semana), height=300)
+            else:
+                bloque_estado_vacio("Semana sin visitas en agenda", "No hay turnos en la semana elegida para este paciente.", sugerencia="Cambiá la fecha de referencia de la semana o agendá una visita nueva.")
+            limite = seleccionar_limite_registros("Visitas a mostrar", len(df_filtrado), key=f"agenda_limit_{paciente_sel}", default=20, opciones=(10, 20, 30, 50, 80, 120))
+            cols_visibles = ["Fecha y Hora", "Profesional", "Estado", "fecha", "hora"]
+            df_render = df_filtrado.sort_values("_fecha_dt", ascending=False)[cols_visibles].rename(columns={"fecha": "Fecha", "hora": "Hora"})
+            mostrar_dataframe_con_scroll(df_render.head(limite), height=360)

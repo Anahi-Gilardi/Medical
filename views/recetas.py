@@ -1,0 +1,260 @@
+from __future__ import annotations
+
+from datetime import datetime as _dt, timedelta as _td
+
+from core.alert_toasts import queue_toast
+
+import streamlit as st
+
+from core.database import guardar_datos
+from core._db_sql_clinico import get_indicaciones_paciente
+from core._db_sql_operativo import get_administraciones_by_fecha
+from core.utils import (
+    ahora,
+    cargar_json_asset,
+    puede_accion,
+)
+from views._recetas_utils import (
+    FPDF_DISPONIBLE,
+    CANVAS_DISPONIBLE,
+    nombre_usuario as _nombre_usuario,
+)
+from views._recetas_mar import (
+    render_cortina_mar_hospitalaria as _render_cortina_mar_hospitalaria,
+    render_marco_clinico_cortina as _render_marco_clinico_cortina,
+)
+from views._recetas_stock import render_control_medicacion_stock as _render_control_stock
+from views._recetas_indicaciones import (
+    resumen_medicacion_activa as _resumen_medicacion_activa,
+)
+from views._recetas_prescripcion import (
+    render_nueva_prescripcion as _render_nueva_prescripcion,
+)
+from views._recetas_turno import (
+    render_administracion_turno as _render_administracion_turno,
+    render_historial_prescripciones as _render_historial_prescripciones,
+)
+
+_RECETAS_SQL_STATUS_KEY = "_mc_recetas_sql_status"
+
+
+def registrar_estado_recetas_sql(
+    session_state: dict,
+    *,
+    ok: bool,
+    paciente: str,
+    indicaciones: int = 0,
+    administraciones: int = 0,
+    error: Exception | None = None,
+) -> dict:
+    """Deja un diagnostico breve de la lectura SQL de recetas/MAR para la UI."""
+    status = {
+        "ok": bool(ok),
+        "paciente": str(paciente or ""),
+        "indicaciones": int(indicaciones or 0),
+        "administraciones": int(administraciones or 0),
+        "fallback": None if ok else "local",
+    }
+    if error is not None:
+        status["error_type"] = type(error).__name__
+        status["error"] = str(error)[:180]
+    session_state[_RECETAS_SQL_STATUS_KEY] = status
+    return status
+
+
+def estado_recetas_sql(session_state: dict) -> dict:
+    status = session_state.get(_RECETAS_SQL_STATUS_KEY)
+    return status if isinstance(status, dict) else {}
+
+
+def render_recetas(paciente_sel, mi_empresa, user, rol=None):
+    if not paciente_sel:
+        st.info("Selecciona un paciente en el menu lateral.")
+        return
+    try:
+        _render_recetas_inner(paciente_sel, mi_empresa, user, rol)
+    except Exception as e:
+        import traceback
+        from core.app_logging import log_event
+        log_event("recetas_error", f"render: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        raise
+
+def _render_recetas_inner(paciente_sel, mi_empresa, user, rol=None):
+
+    from core.ui_liviano import headers_sugieren_equipo_liviano
+
+    es_movil = headers_sugieren_equipo_liviano() or st.session_state.get("mc_liviano_modo") == "on"
+    rol = rol or user.get("rol", "")
+    nombre_usuario = _nombre_usuario(user)
+    puede_prescribir = puede_accion(rol, "recetas_prescribir")
+    puede_registrar_dosis = puede_accion(rol, "recetas_registrar_dosis")
+    puede_cambiar_estado = puede_accion(rol, "recetas_cambiar_estado")
+
+    st.markdown("## Recetas y administración")
+    st.caption(f"Profesional en sesión: **{nombre_usuario}**")
+
+    try:
+        vademecum_base = cargar_json_asset("vademecum.json")
+    except Exception:
+        vademecum_base = ["Medicamento 1", "Medicamento 2"]
+
+    if puede_prescribir:
+        _render_nueva_prescripcion(paciente_sel, mi_empresa, user, rol, nombre_usuario, es_movil, vademecum_base)
+
+    with st.expander("🤖 Asistente IA de Prescripciones", expanded=False):
+        col_r1, col_r2 = st.columns(2)
+        with col_r1:
+            ai_med = st.text_input("Medicamento", placeholder="Ej: Amoxicilina 500mg", key="ai_pres_med")
+            ai_ind = st.text_input("Indicación", placeholder="Ej: Infección respiratoria", key="ai_pres_ind")
+            if st.button("✍️ Generar receta con IA", use_container_width=True, key="ai_gen_pres"):
+                with st.spinner("Generando receta..."):
+                    from core.ai_features import generate_prescription_ai
+                    resultado = generate_prescription_ai(paciente_sel, ai_med, ai_ind)
+                if resultado:
+                    st.session_state["_ai_prescription_result"] = resultado
+                else:
+                    from core.ai_features import ai_not_available_warning
+                    ai_not_available_warning()
+            if st.session_state.get("_ai_prescription_result"):
+                st.info(st.session_state["_ai_prescription_result"])
+                if st.button("Limpiar", key="ai_pres_clear", use_container_width=True):
+                    st.session_state.pop("_ai_prescription_result", None)
+                    st.rerun()
+        with col_r2:
+            st.caption("Verificar interacciones")
+            if st.button("🔍 Analizar interacciones de medicación actual", use_container_width=True, key="ai_interact_btn"):
+                with st.spinner("Analizando..."):
+                    from core.ai_features import check_drug_interactions
+                    resultado = check_drug_interactions(paciente_sel)
+                if resultado:
+                    st.session_state["_ai_interaction_result"] = resultado
+                else:
+                    from core.ai_features import ai_not_available_warning
+                    ai_not_available_warning()
+            if st.session_state.get("_ai_interaction_result"):
+                st.info(st.session_state["_ai_interaction_result"])
+                if st.button("Cerrar", key="ai_interact_clear", use_container_width=True):
+                    st.session_state.pop("_ai_interaction_result", None)
+                    st.rerun()
+
+    st.divider()
+
+    # --- LECTURA DESDE POSTGRESQL (con caché @st.cache_data) ---
+    from core.nextgen_sync import _obtener_uuid_paciente, _obtener_uuid_empresa
+
+    recs_todas = []
+    admin_hoy = []
+    fecha_hoy = ahora().strftime("%d/%m/%Y")
+    uso_sql_recetas = False
+
+    try:
+        partes = paciente_sel.split(" - ")
+        if len(partes) > 1:
+            dni = partes[1].strip()
+            empresa = st.session_state.get("u_actual", {}).get("empresa", "Clinica General")
+            empresa_id = _obtener_uuid_empresa(empresa)
+            if empresa_id:
+                pac_uuid = _obtener_uuid_paciente(dni, empresa_id)
+                if pac_uuid:
+                    if st.session_state.pop("_rx_sql_invalidar", False):
+                        get_indicaciones_paciente.clear()
+                        get_administraciones_by_fecha.clear()
+                    fecha_hoy_iso = ahora().strftime("%Y-%m-%d")
+                    inds_sql = get_indicaciones_paciente(pac_uuid)
+                    adms_sql = get_administraciones_by_fecha(pac_uuid, f"{fecha_hoy_iso}T00:00:00", f"{fecha_hoy_iso}T23:59:59")
+                    uso_sql_recetas = True
+                    registrar_estado_recetas_sql(
+                        st.session_state,
+                        ok=True,
+                        paciente=paciente_sel,
+                        indicaciones=len(inds_sql),
+                        administraciones=len(adms_sql),
+                    )
+                    for ind in inds_sql:
+                        extra = ind.get("datos_extra", {}) or {}
+                        recs_todas.append({
+                            "_sql_id": ind.get("id", ""),
+                            "paciente": paciente_sel,
+                            "med": ind.get("medicamento", ""),
+                            "fecha": (ind.get("fecha_indicacion") or "")[:16].replace("T", " "),
+                            "estado_receta": ind.get("estado", "Activa"),
+                            "estado_clinico": ind.get("estado", "Activa"),
+                            "via": ind.get("via_administracion", ""),
+                            "frecuencia": ind.get("frecuencia", ""),
+                            "tipo_indicacion": ind.get("tipo_indicacion", ""),
+                            "dias_duracion": extra.get("dias_duracion", 7),
+                            "medico_nombre": extra.get("medico_nombre", ""),
+                            "medico_matricula": extra.get("medico_matricula", ""),
+                            "firma_b64": extra.get("firma_b64", ""),
+                            "hora_inicio": extra.get("hora_inicio", ""),
+                            "horarios_programados": extra.get("horarios_programados", []),
+                            "solucion": extra.get("solucion", ""),
+                            "volumen_ml": extra.get("volumen_ml", 0),
+                            "velocidad_ml_h": extra.get("velocidad_ml_h", None),
+                            "alternar_con": extra.get("alternar_con", ""),
+                            "detalle_infusion": extra.get("detalle_infusion", ""),
+                            "plan_hidratacion": extra.get("plan_hidratacion", []),
+                        })
+                    for adm in adms_sql:
+                        extra = adm.get("datos_extra", {}) or {}
+                        admin_hoy.append({
+                            "paciente": paciente_sel, "fecha": fecha_hoy,
+                            "med": extra.get("medicamento", ""),
+                            "horario_programado": adm.get("horario_programado", ""),
+                            "hora": extra.get("hora_real_administracion", adm.get("hora_real_administracion", "")),
+                            "estado": adm.get("estado", ""),
+                            "motivo": adm.get("motivo_no_realizada", ""),
+                            "firma": extra.get("firma", ""),
+                            "matricula_profesional": extra.get("matricula_profesional", ""),
+                            "usuario_login": extra.get("usuario_login", ""),
+                        })
+                else:
+                    registrar_estado_recetas_sql(st.session_state, ok=False, paciente=paciente_sel)
+            else:
+                registrar_estado_recetas_sql(st.session_state, ok=False, paciente=paciente_sel)
+        else:
+            registrar_estado_recetas_sql(st.session_state, ok=False, paciente=paciente_sel)
+    except Exception as e:
+        from core.app_logging import log_event
+        log_event("recetas_sql", f"error_lectura:{type(e).__name__}")
+        registrar_estado_recetas_sql(st.session_state, ok=False, paciente=paciente_sel, error=e)
+
+    if not uso_sql_recetas:
+        recs_todas = [r for r in st.session_state.get("indicaciones_db", []) if r.get("paciente") == paciente_sel]
+        admin_hoy = [
+            a for a in st.session_state.get("administracion_med_db", [])
+            if a.get("paciente") == paciente_sel and a.get("fecha") == fecha_hoy
+        ]
+        sql_status = estado_recetas_sql(st.session_state)
+        if sql_status and not sql_status.get("ok"):
+            st.caption("Modo local/cache activo para recetas y administracion. La lectura SQL no respondio en esta vista.")
+
+    from core.sync_utils import auto_vencer_indicaciones
+    auto_vencer_indicaciones(recs_todas)
+
+    recs_activas = [r for r in recs_todas if r.get("estado_receta", "Activa") == "Activa"]
+
+    _resumen_medicacion_activa(recs_activas)
+
+    _render_control_stock(paciente_sel, mi_empresa, user, recs_activas)
+
+    if recs_activas:
+        _render_administracion_turno(
+            paciente_sel, mi_empresa, user, nombre_usuario, es_movil,
+            recs_activas, admin_hoy, fecha_hoy, puede_registrar_dosis, puede_cambiar_estado,
+        )
+    else:
+        st.markdown(
+            """
+            <div class="mc-rx-callout-care" style="border-color:rgba(148,163,184,0.2);background:linear-gradient(90deg,rgba(30,41,59,0.5),rgba(15,23,42,0.4));">
+                <span class="mc-rx-callout-ico" aria-hidden="true">📋</span>
+                <p>
+                    <strong>Sin indicaciones activas</strong> para este paciente. Cuando el médico prescriba o cargues una orden en papel,
+                    aparecerá aquí la administración del turno con el mismo estándar de trazabilidad.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    _render_historial_prescripciones(paciente_sel, mi_empresa, user, es_movil, recs_todas)

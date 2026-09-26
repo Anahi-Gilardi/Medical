@@ -1,0 +1,6545 @@
+/* Fuentes externas eliminadas — se usa tipografía nativa del sistema */
+
+/* ═══════════════════════════════════════════════════
+   💎 iOS FLUID EXPERIENCE — Global Reset
+   ═══════════════════════════════════════════════════ */
+
+/* Tipografía nativa del sistema — legible y estable */
+html, body, .stApp {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scroll suave global */
+html {
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* Transiciones suaves en elementos interactivos — SIN transform ni scale */
+.stButton > button,
+.stDownloadButton > button,
+.stLinkButton > a,
+[data-testid="stExpander"] > details > summary,
+[data-testid="stTabs"] [role="tablist"] button {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+/* Fade-in suave al cargar contenido (evita parpadeos blancos) */
+@keyframes mc-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+[data-testid="stVerticalBlock"] > div,
+[data-testid="stAppViewContainer"] > section.main,
+[data-testid="stTabs"] [role="tabpanel"],
+[data-testid="stExpander"] > details > div {
+    animation: mc-fade-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+}
+
+/* Minimalismo: ocultar líneas divisorias agresivas */
+[data-testid="stHorizontalRule"],
+hr,
+.stDivider,
+[data-testid="stDivider"] {
+    opacity: 0.08 !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    margin: 1.2rem 0 !important;
+}
+
+/* Fondo global glassmorphism suave */
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(180deg, #0b1020 0%, #0f172a 100%) !important;
+}
+
+/* Contenedores principales: sólidos, limpios, profesionales */
+[data-testid="stVerticalBlock"] > div > div[data-testid="stContainer"],
+[data-testid="stVerticalBlock"] > div > div[class*="st-emotion"] {
+    border-radius: 10px !important;
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   📐 SIDEBAR FIJO iOS — Ancho estático 300px
+   ═══════════════════════════════════════════════════ */
+
+[data-testid="stSidebar"] {
+    min-width: 300px !important;
+    max-width: 300px !important;
+    width: 300px !important;
+    background: #0f172a !important;
+    border-right: 1px solid #1e293b !important;
+}
+
+[data-testid="stSidebar"] .stButton > button {
+    border-radius: 8px !important;
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #5eead4 !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    padding: 0.55rem 0.9rem !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease !important;
+    box-shadow: none !important;
+}
+
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: #27354f !important;
+    border-color: #14b8a6 !important;
+}
+
+[data-testid="stSidebar"] .stButton > button:active {
+    background: #162032 !important;
+    border-color: #0f766e !important;
+}
+
+/* Sidebar collapsed control — botón de hamburguesa iOS flotante */
+[data-testid="stSidebarCollapsedControl"] {
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    width: 45px !important;
+    height: 45px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+/* Botón colapsar dentro del sidebar — visible siempre */
+[data-testid="stSidebar"] button[kind="header"],
+button[kind="headerNoPadding"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    pointer-events: auto !important;
+}
+
+/* Asegurar que no haya capas bloqueando clicks en el área del botón */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapsedControl"] * {
+    pointer-events: auto !important;
+}
+
+:root {
+    --bg-app: #0b1020;
+    --bg-app-soft: #121a2e;
+    --bg-sidebar: rgba(9, 14, 26, 0.82);
+    --bg-card: rgba(22, 32, 52, 0.72);
+    --bg-card-strong: rgba(26, 39, 64, 0.85);
+    --bg-input: rgba(45, 58, 82, 0.65);
+    --border-col: rgba(148, 163, 184, 0.10);
+    --border-col-strong: rgba(20, 184, 166, 0.30);
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent: #14b8a6;
+    --accent-2: #3b82f6;
+    --accent-soft: rgba(20, 184, 166, 0.14);
+    --success: #34d399;
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --info: #60a5fa;
+    /* Sombras difusas tipo visionOS (sin bordes duros, solo profundidad) */
+    --shadow-soft: 0 32px 64px rgba(2, 6, 18, 0.42);
+    --shadow-card: 0 24px 56px rgba(2, 6, 18, 0.28), 0 0 0 1px rgba(148, 163, 184, 0.06);
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --radius-lg: 24px;
+    --radius-md: 20px;
+    --radius-sm: 14px;
+    --radius-hero: 28px;
+    --glass-base: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(20px) saturate(180%);
+}
+
+html, body, .stApp {
+    background:
+        radial-gradient(ellipse 80% 50% at 100% 0%, rgba(20, 184, 166, 0.11), transparent 55%),
+        radial-gradient(ellipse 70% 45% at 0% 10%, rgba(59, 130, 246, 0.08), transparent 50%),
+        linear-gradient(180deg, var(--bg-app) 0%, #070b14 100%) !important;
+    font-family: system-ui, sans-serif !important;
+}
+
+/* Scroll global: contenido largo desplaza la página (evita sensación de “colapso” sin barra). */
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100%;
+}
+
+.stApp {
+    min-height: 100vh;
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+}
+
+body {
+    color: var(--text-main) !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100%;
+}
+
+.block-container {
+    max-width: 1500px !important;
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.8rem !important;
+}
+
+/* Alerta de inventario: tarjeta al inicio del contenido (main.py → notificaciones_superiores). */
+.mc-inv-alert {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    margin: 0 0 0.65rem;
+    padding: 0.75rem 0.95rem 0.65rem;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background:
+        radial-gradient(ellipse 90% 80% at 100% 0%, rgba(251, 191, 36, 0.07), transparent 55%),
+        linear-gradient(145deg, rgba(18, 28, 48, 0.97) 0%, rgba(10, 16, 30, 0.99) 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border-left: 4px solid rgba(251, 191, 36, 0.65);
+}
+
+.mc-inv-alert--critical {
+    border-left-color: rgba(248, 113, 113, 0.85);
+    background:
+        radial-gradient(ellipse 85% 75% at 100% 0%, rgba(248, 113, 113, 0.1), transparent 52%),
+        linear-gradient(145deg, rgba(28, 18, 22, 0.55) 0%, rgba(10, 16, 30, 0.98) 100%);
+}
+
+.mc-inv-alert--caution {
+    border-left-color: rgba(251, 191, 36, 0.75);
+}
+
+.mc-inv-alert--mixed {
+    /* Rojo + ámbar a la vez: acento intermedio (evita border-image con radius) */
+    border-left-color: rgba(251, 146, 60, 0.92);
+    background:
+        radial-gradient(ellipse 88% 72% at 100% 0%, rgba(248, 113, 113, 0.08), transparent 50%),
+        radial-gradient(ellipse 70% 60% at 0% 100%, rgba(251, 191, 36, 0.06), transparent 48%),
+        linear-gradient(145deg, rgba(22, 20, 28, 0.6) 0%, rgba(10, 16, 30, 0.98) 100%);
+}
+
+.mc-inv-alert__main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+}
+
+.mc-inv-alert__brand {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.mc-inv-alert__ico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    line-height: 1;
+    flex-shrink: 0;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(20, 184, 166, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mc-inv-alert__titles {
+    min-width: 0;
+}
+
+.mc-inv-alert__kicker {
+    margin: 0 0 0.12rem 0;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5eead4;
+}
+
+.mc-inv-alert__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.35;
+    color: #f8fafc;
+    letter-spacing: -0.02em;
+}
+
+.mc-inv-alert__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+.mc-inv-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 5.6rem;
+    padding: 0.42rem 0.55rem 0.38rem;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    text-align: center;
+}
+
+.mc-inv-stat__num {
+    font-size: 1.45rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+
+.mc-inv-stat__lbl {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 0.15rem;
+}
+
+.mc-inv-stat__hint {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-top: 0.08rem;
+}
+
+.mc-inv-stat--danger {
+    background: linear-gradient(165deg, rgba(127, 29, 29, 0.38) 0%, rgba(45, 15, 18, 0.55) 100%);
+    border-color: rgba(248, 113, 113, 0.35);
+    box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.08) inset;
+}
+
+.mc-inv-stat--danger .mc-inv-stat__num {
+    color: #fecaca;
+}
+
+.mc-inv-stat--danger .mc-inv-stat__lbl {
+    color: #fca5a5;
+}
+
+.mc-inv-stat--warn {
+    background: linear-gradient(165deg, rgba(120, 53, 15, 0.42) 0%, rgba(35, 28, 12, 0.5) 100%);
+    border-color: rgba(251, 191, 36, 0.32);
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.06) inset;
+}
+
+.mc-inv-stat--warn .mc-inv-stat__num {
+    color: #fde68a;
+}
+
+.mc-inv-stat--warn .mc-inv-stat__lbl {
+    color: #fcd34d;
+}
+
+.mc-inv-alert__foot {
+    margin: 0.55rem 0 0 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.45;
+    color: #94a3b8;
+}
+
+.mc-inv-alert__foot strong {
+    color: #5eead4;
+    font-weight: 800;
+}
+
+/* Variante compacta + responsive (móvil / tablet) */
+.mc-inv-alert--compact {
+    max-width: min(100%, 36rem);
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0.35rem;
+    padding: 0.48rem 0.72rem 0.42rem;
+    border-radius: 12px;
+}
+
+.mc-inv-alert--compact .mc-inv-alert__main {
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+}
+
+.mc-inv-alert--compact .mc-inv-alert__ico {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.92rem;
+    border-radius: 10px;
+}
+
+.mc-inv-alert--compact .mc-inv-alert__kicker {
+    font-size: 0.58rem;
+    margin-bottom: 0.06rem;
+}
+
+.mc-inv-alert--compact .mc-inv-alert__title {
+    font-size: 0.86rem;
+    line-height: 1.3;
+}
+
+.mc-inv-alert__foot--compact {
+    margin-top: 0.42rem;
+    padding-top: 0.38rem;
+    font-size: 0.72rem;
+    line-height: 1.42;
+}
+
+/* Chips de métricas (baja altura vs. cajas .mc-inv-stat) */
+.mc-inv-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.32rem;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1 1 9rem;
+    min-width: 0;
+}
+
+.mc-inv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.2rem 0.48rem 0.2rem 0.34rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: nowrap;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.mc-inv-chip__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.mc-inv-chip__n {
+    font-size: 0.92rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+}
+
+.mc-inv-chip__txt {
+    text-transform: lowercase;
+    opacity: 0.95;
+}
+
+.mc-inv-chip__hint {
+    font-size: 0.58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+    margin-left: 0.06rem;
+}
+
+.mc-inv-chip--danger {
+    background: linear-gradient(165deg, rgba(127, 29, 29, 0.42) 0%, rgba(45, 15, 18, 0.52) 100%);
+    border-color: rgba(248, 113, 113, 0.38);
+    color: #fecaca;
+}
+
+.mc-inv-chip--danger .mc-inv-chip__dot {
+    background: #f87171;
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+}
+
+.mc-inv-chip--warn {
+    background: linear-gradient(165deg, rgba(120, 53, 15, 0.44) 0%, rgba(35, 28, 12, 0.48) 100%);
+    border-color: rgba(251, 191, 36, 0.32);
+    color: #fde68a;
+}
+
+.mc-inv-chip--warn .mc-inv-chip__dot {
+    background: #fbbf24;
+    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.15);
+}
+
+/* Ancla invisible: centrar fila de botones Streamlit siguiente (escritorio / tablet) */
+div[data-testid="stElementContainer"]:has(.mc-inv-after-card)
+    + div[data-testid="stElementContainer"]
+    [data-testid="stHorizontalBlock"] {
+    max-width: min(100%, 26rem);
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+@media (max-width: 900px) {
+    .mc-inv-chips {
+        justify-content: flex-start;
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .mc-inv-alert--compact {
+        position: static;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0.4rem 0.55rem 0.38rem;
+    }
+
+    .mc-inv-alert--compact .mc-inv-alert__main {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mc-inv-chip {
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .mc-inv-chip__hint {
+        display: none;
+    }
+
+    div[data-testid="stElementContainer"]:has(.mc-inv-after-card)
+        + div[data-testid="stElementContainer"]
+        [data-testid="stHorizontalBlock"] {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 380px) {
+    .mc-inv-chip {
+        font-size: 0.66rem;
+        padding: 0.18rem 0.4rem;
+    }
+
+    .mc-inv-chip__n {
+        font-size: 0.85rem;
+    }
+}
+
+/* Tablet-specific optimizations (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .block-container {
+        max-width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Sidebar colapsable en tablets */
+    [data-testid="stSidebar"] {
+        width: 280px !important;
+    }
+    
+    /* Reducir sombras pesadas en tablets */
+    div[data-testid="stForm"],
+    div[data-testid="stExpander"],
+    div[data-testid="stFileUploader"] {
+        box-shadow: 0 8px 24px rgba(2, 6, 18, 0.28), var(--shadow-inset) !important;
+    }
+}
+
+/* Mobile optimizations (max-width: 767px) */
+@media (max-width: 767px) {
+    /* NO forzar ancho/posicion del sidebar en movil - dejar comportamiento nativo de Streamlit */
+    
+    /* Reducir efectos pesados en móviles para mejor rendimiento */
+    .stButton > button,
+    .stDownloadButton > button {
+        min-height: 44px !important;
+        box-shadow: 0 4px 12px rgba(2, 6, 18, 0.24), var(--shadow-inset) !important;
+        transition: none !important;
+    }
+    
+    .stButton > button:hover,
+    .stDownloadButton > button:hover {
+        transform: none !important;
+        box-shadow: 0 4px 12px rgba(2, 6, 18, 0.24), var(--shadow-inset) !important;
+    }
+    
+    /* Reducir blur en móviles */
+    .mc-inv-alert {
+        backdrop-filter: none !important;
+        background: linear-gradient(145deg, rgba(18, 28, 48, 0.99) 0%, rgba(10, 16, 30, 1) 100%) !important;
+    }
+    
+    /* Optimizar scroll en móviles */
+    [data-testid="stSidebar"] > div:first-child {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+    
+    /* Reducir padding en móviles */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    div[data-testid="stForm"] {
+        padding: 0.7rem 0.8rem 0.6rem !important;
+    }
+    
+    /* Optimizar inputs en móviles */
+    [data-baseweb="input"] > div,
+    [data-baseweb="select"] > div,
+    [data-baseweb="textarea"] > div,
+    textarea,
+    input[type="number"],
+    input[type="text"] {
+        min-height: 48px !important;
+        box-shadow: 0 2px 8px rgba(2, 6, 18, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    /* Reducir sombras en alertas móviles */
+    div[data-testid="stAlert"] {
+        box-shadow: 0 8px 20px rgba(2, 6, 18, 0.32) !important;
+    }
+}
+
+/* Very small mobile devices (max-width: 480px) */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    h2 {
+        font-size: 1.25rem !important;
+    }
+    
+    h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Full width en móviles pequeños */
+    .block-container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    
+    /* Optimizar expander en móviles pequeños */
+    [data-testid="stExpander"] {
+        border-radius: 14px !important;
+    }
+    
+    [data-testid="stExpander"] details summary {
+        border-radius: 12px !important;
+        padding: 0.6rem 0.8rem !important;
+    }
+}
+
+/* Detalle dentro del expander “Ítems en alerta” */
+.mc-inv-detail-root {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.mc-inv-detail-block__label {
+    margin: 0 0 0.28rem 0;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.mc-inv-detail-block__label--danger {
+    color: #fca5a5;
+}
+
+.mc-inv-detail-block__label--warn {
+    color: #fcd34d;
+}
+
+.mc-inv-detail-block__list {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: #e2e8f0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    font-weight: 500;
+}
+
+.mc-inv-detail-block__name {
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+/* Detalle inventario vía Markdown (evita HTML crudo en expander + scroll) */
+.mc-inv-md-sec {
+    margin: 0 0 0.45rem 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    line-height: 1.35;
+}
+
+.mc-inv-md-sec--danger {
+    color: #fca5a5;
+}
+
+.mc-inv-md-sec--warn {
+    color: #fcd34d;
+}
+
+/* Franja minimizada (Ocultar) */
+.mc-inv-mini {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.55rem;
+    margin: 0 0 0.45rem;
+    border-radius: 11px;
+    border: 1px solid rgba(20, 184, 166, 0.2);
+    background: rgba(11, 17, 30, 0.94);
+    box-shadow: 0 4px 14px rgba(2, 6, 23, 0.2);
+
+}
+
+/* Minimizada prolija: sin chips numéricos (el detalle va en «Mostrar») */
+.mc-inv-mini--tidy {
+    align-items: flex-start;
+    padding: 0.5rem 0.65rem;
+    margin-bottom: 0.5rem;
+    border-color: rgba(20, 184, 166, 0.28);
+    max-width: min(100%, 42rem);
+}
+
+.mc-inv-mini__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.mc-inv-mini--tidy .mc-inv-mini__head {
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+    line-height: 1.2;
+}
+
+.mc-inv-mini--tidy .mc-inv-mini__sub {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #94a3b8;
+    line-height: 1.35;
+}
+
+.mc-inv-mini--tidy .mc-inv-mini__sub strong {
+    color: #5eead4;
+    font-weight: 700;
+}
+
+.mc-inv-mini__ico {
+    font-size: 0.95rem;
+    line-height: 1;
+    opacity: 0.95;
+    flex-shrink: 0;
+    margin-top: 0.12rem;
+}
+
+.mc-inv-mini__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.mc-inv-mini__title {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5eead4;
+}
+
+.mc-inv-mini__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.28rem;
+    align-items: center;
+}
+
+.mc-inv-mini__tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+.mc-inv-mini__tag--danger {
+    background: rgba(127, 29, 29, 0.45);
+    color: #fecaca;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.mc-inv-mini__tag--warn {
+    background: rgba(120, 53, 15, 0.42);
+    color: #fde68a;
+    border: 1px solid rgba(251, 191, 36, 0.28);
+}
+
+@media (max-width: 520px) {
+    .mc-inv-alert__stats {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .mc-inv-stat {
+        flex: 1 1 calc(50% - 0.3rem);
+        min-width: calc(50% - 0.3rem);
+    }
+
+    .mc-inv-mini--tidy {
+        max-width: 100%;
+        padding: 0.45rem 0.5rem;
+    }
+
+    .mc-inv-mini--tidy .mc-inv-mini__sub {
+        font-size: 0.66rem;
+    }
+}
+
+/* ===== BANNER INVENTARIO MINI EN MOBILE: compactar y evitar botones gigantes ===== */
+@media (max-width: 767px) {
+    /* Ocultar el boton "Ir a Inventario" del banner mini: redundante con el menu lateral */
+    .mc-inv-mini-wrap + [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) button[kind="primary"] {
+        display: none !important;
+    }
+    .mc-inv-mini-wrap + [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {
+        display: none !important;
+    }
+    /* Forzar layout horizontal del banner mini: chip + boton Mostrar en una fila */
+    .mc-inv-mini-wrap + [data-testid="stHorizontalBlock"] {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 0.4rem !important;
+    }
+    .mc-inv-mini-wrap + [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+    .mc-inv-mini-wrap + [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:last-child {
+        flex: 0 0 auto !important;
+        min-width: 80px !important;
+    }
+    /* Boton "Mostrar" compacto en mobile */
+    .mc-inv-mini-wrap + [data-testid="stHorizontalBlock"] button {
+        padding: 0.35rem 0.6rem !important;
+        font-size: 0.78rem !important;
+        min-height: 34px !important;
+        height: auto !important;
+    }
+}
+
+/* Login / recuperación: aviso SMTP sin el bloque alto de st.warning */
+.mc-auth-smtp-strip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0 0 0.65rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 11px;
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    background: linear-gradient(135deg, rgba(55, 48, 20, 0.55) 0%, rgba(15, 23, 42, 0.88) 100%);
+    box-shadow: 0 4px 14px rgba(2, 6, 23, 0.15);
+}
+
+.mc-auth-smtp-strip__ico {
+    font-size: 1rem;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.mc-auth-smtp-strip__line {
+    margin: 0;
+    min-width: 0;
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: #cbd5e1;
+}
+
+.mc-auth-smtp-strip__title {
+    font-weight: 800;
+    color: #fef3c7;
+    letter-spacing: -0.01em;
+}
+
+.mc-auth-smtp-strip__sep {
+    margin: 0 0.28rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.mc-auth-smtp-strip__sub {
+    font-weight: 500;
+    color: #cbd5e1;
+}
+
+.mc-auth-smtp-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.55rem;
+    margin: 0 0 0.55rem;
+    border-radius: 9px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    background: rgba(15, 23, 42, 0.75);
+    box-shadow: 0 2px 10px rgba(2, 6, 23, 0.12);
+}
+
+.mc-auth-smtp-mini__ico {
+    font-size: 0.9rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.mc-auth-smtp-mini__txt {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    line-height: 1.3;
+    min-width: 0;
+}
+
+/* Historial · «Explorar por sección»: pills en fila con scroll (cortina horizontal, responsive). */
+.mc-hist-cortina-mark {
+    display: none;
+}
+
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) + div [data-testid="stPills"],
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) + div [data-testid="stPills"] > div {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 0.35rem !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    padding: 0.2rem 0 0.45rem;
+    margin: 0;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(20, 184, 166, 0.45) rgba(15, 23, 42, 0.35);
+}
+
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) + div [data-testid="stPills"] button,
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) + div [data-testid="stPills"] [role="button"] {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    padding: 0.28rem 0.65rem !important;
+    min-height: 2.15rem !important;
+    border-radius: 999px !important;
+    scroll-snap-align: start;
+    max-width: min(96vw, 520px);
+}
+
+@media (max-width: 768px) {
+    .stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) + div [data-testid="stPills"] button,
+    .stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) + div [data-testid="stPills"] [role="button"] {
+        font-size: 0.74rem !important;
+        padding: 0.26rem 0.55rem !important;
+    }
+}
+
+/* Variante DOM (Streamlit puede anidar el bloque de pills). */
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) ~ div [data-testid="stPills"],
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) ~ div [data-testid="stPills"] > div {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+    overflow-x: auto !important;
+    padding: 0.2rem 0 0.45rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) ~ div [data-testid="stPills"] button,
+.stApp main .block-container .stMarkdown:has(.mc-hist-cortina-mark) ~ div [data-testid="stPills"] [role="button"] {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    font-size: 0.78rem !important;
+    padding: 0.28rem 0.65rem !important;
+    min-height: 2.15rem !important;
+    border-radius: 999px !important;
+}
+
+[data-testid="stHeader"] {
+    background: transparent !important;
+}
+
+[data-testid="stToolbar"] {
+    right: 1rem !important;
+}
+
+[data-testid="stSidebar"],
+[data-testid="stSidebar"] > div:first-child {
+    background:
+        linear-gradient(180deg, rgba(9, 14, 26, 0.99) 0%, rgba(7, 11, 22, 0.99) 100%) !important;
+    border-right: 1px solid rgba(20, 184, 166, 0.12) !important;
+}
+
+/* Sidebar: scroll interno si el listado (pacientes, alertas) supera la altura de pantalla. */
+[data-testid="stSidebar"] > div:first-child {
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+[data-testid="stSidebar"] .block-container {
+    padding-top: 0.4rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+p, h1, h2, h3, h4, h5, h6, label, li {
+    color: var(--text-main) !important;
+    font-family: system-ui, sans-serif !important;
+}
+
+[data-testid="stMarkdownContainer"],
+[data-testid="stText"],
+[data-testid="stCaptionContainer"],
+[data-testid="stMetricValue"],
+[data-testid="stMetricLabel"] {
+    font-family: system-ui, sans-serif !important;
+    color: var(--text-main) !important;
+}
+
+.material-symbols-rounded,
+.material-symbols-outlined,
+[data-testid="stIconMaterial"] {
+    font-family: 'Material Symbols Rounded' !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    direction: ltr !important;
+    -webkit-font-smoothing: antialiased !important;
+}
+
+h1, h2, h3 {
+    letter-spacing: -0.03em;
+    font-weight: 800 !important;
+}
+
+h1 {
+    font-size: clamp(2rem, 3vw, 3rem) !important;
+}
+
+h2 {
+    font-size: clamp(1.7rem, 2.5vw, 2.4rem) !important;
+}
+
+h3 {
+    font-size: clamp(1.35rem, 2vw, 1.9rem) !important;
+}
+
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stCaptionContainer"] {
+    color: var(--text-muted) !important;
+}
+
+div[data-testid="stForm"],
+div[data-testid="stVerticalBlock"] > div[style*="border"],
+div[data-testid="stExpander"],
+div[data-testid="stFileUploader"] {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+div[data-testid="stForm"] {
+    padding: 0.75rem 1rem 0.75rem !important;
+    max-width: 420px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    border-radius: 10px !important;
+}
+
+/* Alertas: marco limpio, sólido */
+div[data-testid="stAlert"] {
+    border-radius: 10px !important;
+    padding: 0 !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    overflow: hidden !important;
+}
+
+div[data-testid="stAlert"] > div {
+    border-radius: calc(var(--radius-lg) - 2px) !important;
+}
+
+[data-testid="stAlert"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stAlert"] [data-testid="stMarkdownContainer"] li,
+[data-testid="stAlert"] [data-testid="stMarkdownContainer"] span {
+    font-weight: 600 !important;
+    font-size: 0.98rem !important;
+    line-height: 1.55 !important;
+    letter-spacing: 0.01em !important;
+}
+
+[data-testid="stAlert"] [data-testid="stMarkdownContainer"] {
+    padding: 0.9rem 1.05rem !important;
+}
+
+[data-testid="stExpander"] {
+    overflow: hidden !important;
+}
+
+[data-testid="stExpander"] details summary {
+    background: rgba(11, 18, 33, 0.4) !important;
+    border-radius: 18px !important;
+}
+
+[data-testid="stExpander"] details summary p,
+[data-testid="stExpander"] details summary span {
+    font-family: system-ui, sans-serif !important;
+}
+
+/* Streamlit expander: sin icono Material evita texto _arrow_right si la fuente no carga */
+[data-testid="stExpander"] summary .material-symbols-rounded,
+[data-testid="stExpander"] summary .material-symbols-outlined,
+[data-testid="stExpander"] summary [data-testid="stIconMaterial"] {
+    display: none !important;
+}
+
+[data-baseweb="input"] > div,
+[data-baseweb="select"] > div,
+[data-baseweb="textarea"] > div,
+textarea,
+input[type="number"],
+input[type="text"] {
+    background: linear-gradient(180deg, rgba(58, 74, 103, 0.92) 0%, rgba(48, 64, 92, 0.94) 100%) !important;
+    border: none !important;
+    border-radius: var(--radius-md) !important;
+    color: #ffffff !important;
+    min-height: 3rem !important;
+    box-shadow:
+        0 2px 14px rgba(2, 6, 18, 0.2),
+        0 0 0 1px rgba(148, 163, 184, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-baseweb="input"] > div:focus-within,
+[data-baseweb="select"] > div:focus-within,
+[data-baseweb="textarea"] > div:focus-within {
+    box-shadow:
+        0 0 0 3px rgba(20, 184, 166, 0.22),
+        0 6px 22px rgba(20, 184, 166, 0.12),
+        0 0 0 1px rgba(20, 184, 166, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-baseweb="select"] div,
+input[type="number"],
+input[type="text"],
+textarea {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+label,
+.stSelectbox label,
+.stTextInput label,
+.stTextArea label,
+.stNumberInput label,
+.stDateInput label,
+.stTimeInput label,
+.stCheckbox label {
+    color: #dce8f9 !important;
+    font-weight: 700 !important;
+}
+
+.stButton > button,
+.stDownloadButton > button {
+    min-height: 40px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    border: 1px solid #334155 !important;
+    background: #1e293b !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+    width: auto !important;
+    min-width: 120px !important;
+    max-width: 280px !important;
+    padding: 0.5rem 1.2rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    background: #27354f !important;
+    border-color: #475569 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+.stButton > button:active,
+.stDownloadButton > button:active {
+    background: #162032 !important;
+    border-color: #334155 !important;
+}
+
+.stButton > button[kind="primary"],
+.stForm [data-testid="stFormSubmitButton"] button {
+    background: #0d9488 !important;
+    border: 1px solid #14b8a6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3) !important;
+    width: auto !important;
+    min-width: 120px !important;
+    max-width: 320px !important;
+    padding: 0.5rem 1.4rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.stButton > button[kind="primary"]:hover,
+.stForm [data-testid="stFormSubmitButton"] button:hover {
+    background: #0f766e !important;
+    border-color: #2dd4bf !important;
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.4) !important;
+}
+
+.stButton > button[kind="primary"]:active,
+.stForm [data-testid="stFormSubmitButton"] button:active {
+    background: #115e59 !important;
+    border-color: #14b8a6 !important;
+}
+
+.stDownloadButton > button {
+    background: #2563eb !important;
+    border: 1px solid #3b82f6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+.stDownloadButton > button *,
+.stDownloadButton > button span,
+.stDownloadButton > button p,
+.stDownloadButton > button div {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+.stButton > button[kind="secondary"] {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.96) 100%) !important;
+}
+
+[data-testid="stFileUploader"] {
+    padding: 1rem !important;
+}
+
+[data-testid="stFileUploaderDropzone"] {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.58) 0%, rgba(11, 18, 33, 0.72) 100%) !important;
+    border: 2px dashed rgba(96, 165, 250, 0.32) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow:
+        0 4px 18px rgba(2, 6, 18, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+[data-testid="stFileUploaderDropzone"]:focus-within {
+    border-color: rgba(20, 184, 166, 0.55) !important;
+    box-shadow:
+        0 0 0 3px rgba(20, 184, 166, 0.16),
+        0 6px 22px rgba(20, 184, 166, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Botones +/- del número (si el tema los muestra como controles aparte). */
+.stNumberInput button,
+.stDateInput button,
+.stTimeInput button {
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: 0 2px 10px rgba(2, 6, 18, 0.18) !important;
+}
+
+/* Slider: coherente con acento teal/azul (Base Web v12+ y fallback role=slider). */
+[data-testid="stSlider"] {
+    margin: 0.2rem 0 1rem !important;
+}
+
+[data-testid="stSlider"] [data-baseweb="slider"] [data-baseweb="thumb"],
+[data-testid="stSlider"] [role="slider"] {
+    background: linear-gradient(135deg, #14b8a6 0%, #2563eb 100%) !important;
+    box-shadow: 0 3px 12px rgba(2, 6, 18, 0.32) !important;
+    border: 2px solid rgba(248, 250, 252, 0.85) !important;
+}
+
+[data-testid="stSlider"] [data-baseweb="slider"] [data-baseweb="track"] {
+    border-radius: 999px !important;
+}
+
+/* Select slider (opciones discretas): marcas y burbuja de valor */
+[data-testid="stSliderTickBar"] {
+    margin-top: 0.35rem !important;
+    color: #94a3b8 !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+[data-testid="stSliderThumbValue"] {
+    font-weight: 800 !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -0.02em !important;
+    color: #f1f5f9 !important;
+    background: rgba(15, 23, 42, 0.88) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(20, 184, 166, 0.28) !important;
+    box-shadow: 0 6px 18px rgba(2, 6, 18, 0.28) !important;
+}
+
+/* Multiselect: aire bajo el control (el input sigue heredando estilos Base Web). */
+[data-testid="stMultiSelect"] {
+    margin-bottom: 0.35rem !important;
+}
+
+/* Menús desplegables en portal (multiselect / selectbox): lista coherente con el tema */
+[data-baseweb="popover"] [data-baseweb="menu"],
+[data-baseweb="popover"] ul[role="listbox"] {
+    background: linear-gradient(180deg, rgba(26, 36, 56, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%) !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid rgba(20, 184, 166, 0.22) !important;
+    box-shadow: var(--shadow-soft), 0 0 0 1px rgba(148, 163, 184, 0.08) !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(96, 165, 250, 0.45) rgba(15, 23, 42, 0.35);
+}
+
+[data-baseweb="popover"] [data-baseweb="menu"] li,
+[data-baseweb="popover"] ul[role="listbox"] li,
+[data-baseweb="popover"] [role="option"] {
+    color: #e2e8f0 !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+
+[data-baseweb="popover"] [data-baseweb="menu"] li:hover,
+[data-baseweb="popover"] ul[role="listbox"] li:hover,
+[data-baseweb="popover"] [role="option"]:hover {
+    background: rgba(20, 184, 166, 0.12) !important;
+}
+
+[data-baseweb="popover"] [aria-selected="true"],
+[data-baseweb="popover"] [data-highlighted="true"] {
+    background: rgba(20, 184, 166, 0.18) !important;
+}
+
+/* ═══════════════════════════════════════════
+   MODERN ENTERPRISE — Navegación de Módulos
+   ═══════════════════════════════════════════ */
+
+/* Grid fluido nativo: se adapta solo a PC, tablet y móvil */
+[data-testid="stRadio"] [role="radiogroup"] {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    gap: 1rem !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0.5rem !important;
+}
+
+/* Tarjeta-módulo: panel sólido, legible, profesional */
+[data-testid="stRadio"] label {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100px !important;
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 10px !important;
+    padding: 1rem 0.75rem !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+    cursor: pointer !important;
+    text-align: center !important;
+}
+
+/* Ocultar input nativo de radio sin romper layout */
+[data-testid="stRadio"] label input[type="radio"],
+[data-testid="stRadio"] label > div:first-child {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Hover seguro: solo color, sin transform scale */
+[data-testid="stRadio"] label:hover {
+    background: #27354f !important;
+    border-color: #0d9488 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Active: ligeramente más oscuro */
+[data-testid="stRadio"] label:active {
+    background: #162032 !important;
+    border-color: #0f766e !important;
+}
+
+/* Activo/seleccionado: acento turquesa sólido */
+[data-testid="stRadio"] label:has(input:checked) {
+    background: #134e4a !important;
+    border-color: #14b8a6 !important;
+    box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.25), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+[data-testid="stRadio"] label:has(input:checked):hover {
+    background: #115e59 !important;
+    border-color: #2dd4bf !important;
+}
+
+/* Texto: legible, tipografía nativa, centrado */
+[data-testid="stRadio"] label p {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: #f1f5f9 !important;
+    margin: 0 !important;
+    text-align: center !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-width: 100% !important;
+}
+
+/* ── Ajustes responsive mínimos para gap/padding ── */
+@media (max-width: 640px) {
+    [data-testid="stRadio"] [role="radiogroup"] {
+        gap: 0.75rem !important;
+        padding: 0.25rem !important;
+    }
+    [data-testid="stRadio"] label {
+        padding: 0.75rem 0.5rem !important;
+        min-height: 85px !important;
+    }
+    [data-testid="stRadio"] label p {
+        font-size: 0.85rem !important;
+    }
+}
+
+[data-testid="stCheckbox"] label {
+    border-radius: 10px !important;
+    transition: background 0.15s ease !important;
+}
+
+[data-testid="stCheckbox"] label:hover {
+    background: rgba(148, 163, 184, 0.07) !important;
+}
+
+[data-testid="stCheckbox"] label p {
+    color: #dce8f9 !important;
+}
+
+hr {
+    border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+[data-testid="stMetric"] {
+    background: linear-gradient(180deg, rgba(24, 37, 63, 0.9) 0%, rgba(16, 25, 43, 0.96) 100%) !important;
+    border: none !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 1.35rem 1.25rem !important;
+    box-shadow: var(--shadow-card), var(--shadow-inset) !important;
+}
+
+.mc-hero {
+    background:
+        radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 38%),
+        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.08), transparent 40%),
+        linear-gradient(145deg, rgba(22, 40, 62, 0.95) 0%, rgba(12, 18, 32, 0.99) 100%);
+    border: none;
+    border-radius: var(--radius-hero);
+    padding: 1.5rem 1.75rem 1.35rem;
+    margin: 0 0 1.35rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(20, 184, 166, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.mc-hero-title {
+    margin: 0 0 0.35rem 0;
+    font-size: clamp(1.45rem, 2.4vw, 2.2rem);
+    font-weight: 800;
+    color: #f8fbff;
+    letter-spacing: -0.03em;
+}
+
+.mc-hero-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.mc-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.mc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    color: #e2ecf9;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.mc-chip-danger {
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.32), rgba(127, 29, 29, 0.4));
+    border-color: rgba(248, 113, 113, 0.42);
+    color: #fee2e2;
+}
+
+.mc-chip-warning {
+    background: linear-gradient(135deg, rgba(161, 98, 7, 0.28), rgba(133, 77, 14, 0.36));
+    border-color: rgba(250, 204, 21, 0.4);
+    color: #fef3c7;
+}
+
+.mc-chip-success {
+    background: linear-gradient(135deg, rgba(21, 128, 61, 0.28), rgba(22, 101, 52, 0.36));
+    border-color: rgba(74, 222, 128, 0.35);
+    color: #dcfce7;
+}
+
+/* Mi equipo: pings de seguridad por usuario (clave, PIN, 2FA) */
+.mc-ping-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    margin-bottom: 0.15rem;
+    align-items: center;
+}
+
+.mc-ping {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    border: 1px solid transparent;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.mc-ping-ok {
+    background: rgba(22, 101, 52, 0.35);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #bbf7d0;
+}
+
+.mc-ping-warn {
+    background: rgba(133, 77, 14, 0.38);
+    border-color: rgba(250, 204, 21, 0.45);
+    color: #fef9c3;
+}
+
+.mc-ping-bad {
+    background: rgba(127, 29, 29, 0.42);
+    border-color: rgba(248, 113, 113, 0.45);
+    color: #fecaca;
+}
+
+.mc-ping-muted {
+    background: rgba(71, 85, 105, 0.25);
+    border-color: rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+}
+
+/* Mi equipo: PIN y avisos compactos (menos altura que st.info / st.warning) */
+.mc-mi-equipo-pin-ok,
+.mc-mi-equipo-pin-warn {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    padding: 0.45rem 0.6rem;
+    border-radius: 10px;
+    margin: 0.25rem 0 0.4rem 0;
+    text-align: left;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.mc-mi-equipo-pin-ok {
+    background: rgba(30, 58, 138, 0.42);
+    border: 1px solid rgba(96, 165, 250, 0.38);
+    color: #dbeafe;
+}
+
+.mc-mi-equipo-pin-warn {
+    background: rgba(120, 53, 15, 0.4);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    color: #fef3c7;
+}
+
+.mc-mi-equipo-pin-label {
+    font-weight: 800;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #93c5fd;
+    margin-right: 0.35rem;
+}
+
+.mc-mi-equipo-pin-warn .mc-mi-equipo-pin-label,
+.mc-mi-equipo-pin-warn strong {
+    color: #fde68a;
+}
+
+.mc-mi-equipo-pin-code {
+    font-family: ui-monospace, monospace;
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 0.12rem 0.35rem;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.55);
+    color: #f8fafc;
+}
+
+.mc-mi-equipo-pin-hint {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #bfdbfe;
+    display: inline;
+}
+
+.mc-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.15rem;
+    margin: 0 0 1.1rem 0;
+}
+
+.mc-card {
+    background: linear-gradient(180deg, rgba(22, 34, 58, 0.96) 0%, rgba(16, 25, 43, 0.96) 100%);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 1.2rem 1.2rem 1.05rem;
+    box-shadow: var(--shadow-card), var(--shadow-inset);
+}
+
+.mc-card h4 {
+    margin: 0 0 0.45rem 0;
+    color: #f8fbff !important;
+    font-size: 1.02rem;
+}
+
+.mc-card p {
+    margin: 0;
+    color: var(--text-muted) !important;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.mc-callout {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background:
+        linear-gradient(180deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.72) 100%);
+    border-radius: 999px;
+    padding: 0.55rem 1.1rem;
+    margin: 0.5rem 0 0.7rem;
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e2e8f0;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.3;
+    max-width: 100%;
+    flex-wrap: wrap;
+    transition: box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.mc-callout:hover {
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.30);
+}
+
+.mc-callout strong {
+    color: #f8fbff;
+    font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════
+   Dynamic Island — Paciente Activo Banner
+   ═══════════════════════════════════════════ */
+
+.mc-dynamic-island {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.42rem 1.1rem 0.42rem 0.55rem;
+    margin: 0.35rem 0 0.6rem;
+    border-radius: 999px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.3;
+    max-width: 100%;
+    flex-wrap: wrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    animation: mc-fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.mc-dynamic-island:hover {
+    background: #27354f;
+    border-color: #475569;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+}
+
+.mc-dynamic-island:active {
+    background: #162032;
+}
+
+.mc-dynamic-island-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2dd4bf;
+    box-shadow: 0 0 8px rgba(45, 212, 191, 0.45);
+    flex-shrink: 0;
+    animation: mc-pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes mc-pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.85); }
+}
+
+.mc-dynamic-island-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+}
+
+.mc-dynamic-island-text strong {
+    color: #f8fbff;
+    font-weight: 700;
+    font-size: 0.84rem;
+    letter-spacing: -0.01em;
+}
+
+.mc-dynamic-island-meta {
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+.mc-section-title {
+    margin: 0.1rem 0 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f8fbff;
+}
+
+.mc-module-shell {
+    background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 40%),
+        linear-gradient(180deg, rgba(14, 23, 42, 0.70) 0%, rgba(10, 18, 34, 0.88) 100%);
+    border: none;
+    border-radius: 16px;
+    padding: 0.4rem 0.45rem 0.3rem;
+    margin: 0 0 0.35rem 0;
+    box-shadow: var(--shadow-soft), 0 0 0 1px rgba(96, 165, 250, 0.08), var(--shadow-inset);
+}
+
+.mc-module-shell-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    margin-bottom: 0.2rem;
+    padding: 0 0.05rem;
+}
+
+.mc-module-shell-kicker {
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #2dd4bf;
+}
+
+.mc-module-shell-title {
+    margin: 0 !important;
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    color: #f8fbff !important;
+    letter-spacing: -0.03em;
+}
+
+.mc-module-shell-sub {
+    margin: 0.35rem 0 0 !important;
+    max-width: 42rem;
+    font-size: 0.84rem !important;
+    font-weight: 500 !important;
+    line-height: 1.45 !important;
+    color: #94a3b8 !important;
+    letter-spacing: 0 !important;
+}
+
+[data-testid="stPills"] {
+    width: 100% !important;
+}
+
+[data-testid="stPills"] [role="listbox"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 0.78rem !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0.05rem 0.05rem 0.95rem 0.05rem !important;
+    margin: 0 !important;
+    scrollbar-width: thin !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+[data-testid="stPills"] [role="option"] {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    border-radius: var(--radius-md) !important;
+    min-height: 46px !important;
+    padding: 0.82rem 1.02rem !important;
+    border: none !important;
+    background: linear-gradient(180deg, rgba(25, 38, 63, 0.94) 0%, rgba(17, 27, 47, 0.98) 100%) !important;
+    box-shadow: var(--shadow-card), var(--shadow-inset) !important;
+    color: #e8f1ff !important;
+    font-weight: 700 !important;
+}
+
+[data-testid="stPills"] label:has(input:checked) {
+    background: linear-gradient(145deg, rgba(20, 184, 166, 0.3) 0%, rgba(13, 148, 136, 0.2) 100%) !important;
+    border-color: rgba(20, 184, 166, 0.5) !important;
+    box-shadow:
+        0 8px 20px rgba(2, 6, 23, 0.22),
+        0 0 0 1px rgba(20, 184, 166, 0.3), var(--shadow-inset) !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+[data-testid="stPills"] [role="option"] span {
+    color: inherit !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+}
+
+.mc-module-strip {
+    display: flex;
+    gap: 0.9rem;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.1rem 0.15rem 1rem;
+    margin: 0;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mc-module-strip .mc-module-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: max-content;
+    white-space: nowrap;
+    text-decoration: none;
+    color: #e8f1ff;
+    font-weight: 700;
+    font-size: 0.94rem;
+    line-height: 1.1;
+    min-height: 50px;
+    padding: 0.95rem 1.22rem;
+    border-radius: var(--radius-md);
+    border: none;
+    background: linear-gradient(180deg, rgba(25, 38, 63, 0.94) 0%, rgba(17, 27, 47, 0.98) 100%);
+    box-shadow: var(--shadow-card), var(--shadow-inset);
+    scroll-snap-align: start;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mc-module-pill:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mc-module-pill.active {
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.34) 0%, rgba(37, 99, 235, 0.22) 100%);
+    box-shadow:
+        0 16px 36px rgba(13, 148, 136, 0.16),
+        0 0 0 1px rgba(20, 184, 166, 0.45),
+        var(--shadow-inset);
+}
+
+[data-testid="stSidebar"] .stButton > button {
+    border-radius: 16px !important;
+}
+
+[data-testid="stSidebar"] hr {
+    margin: 1.2rem 0 !important;
+}
+
+.mc-sidebar-section {
+    margin: 0.35rem 0 0.25rem;
+}
+
+.mc-sidebar-kicker {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5eead4;
+    margin-bottom: 0.18rem;
+}
+
+.mc-sidebar-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f8fbff;
+    letter-spacing: -0.01em;
+}
+
+.mc-sidebar-subhead {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8ea8cb;
+    margin: 0.75rem 0 0.45rem;
+    line-height: 1.35;
+}
+
+.mc-vitales-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin: 0 0 0.5rem;
+}
+
+.mc-vital-card {
+    margin: 0;
+    padding: 0.72rem 0.78rem 0.75rem;
+    border-radius: var(--radius-md);
+    background:
+        linear-gradient(145deg, rgba(22, 36, 62, 0.92) 0%, rgba(12, 22, 40, 0.97) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: var(--shadow-card), var(--shadow-inset);
+}
+
+.mc-vital-card__time {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #5eead4;
+    margin: 0 0 0.55rem 0;
+    padding-bottom: 0.48rem;
+    line-height: 1.35;
+    opacity: 0.95;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.mc-vital-metrics--grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 0.55rem;
+}
+
+.mc-vital-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.32rem;
+    min-width: 0;
+    padding: 0.42rem 0.48rem 0.45rem;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    box-sizing: border-box;
+}
+
+.mc-vital-metric__label {
+    display: block;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    line-height: 1.35;
+    margin: 0;
+    padding: 0;
+}
+
+.mc-vital-metric__value {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+    color: #e8f4f1;
+    word-break: break-word;
+    margin: 0;
+    padding: 0;
+}
+
+/* Sidebar: refuerzo por si el tema de Streamlit aplana etiqueta + valor */
+[data-testid="stSidebar"] .mc-vital-metric {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+}
+
+[data-testid="stSidebar"] .mc-vital-metric__label + .mc-vital-metric__value {
+    margin-top: 0.08rem;
+}
+
+.mc-vital-metric--ta .mc-vital-metric__value {
+    color: #7ee8da;
+}
+
+.mc-vital-metric--fc .mc-vital-metric__value {
+    color: #93c5fd;
+}
+
+.mc-vital-metric--sat .mc-vital-metric__value {
+    color: #a5b4fc;
+}
+
+.mc-vital-metric--temp .mc-vital-metric__value {
+    color: #fcd34d;
+}
+
+.mc-vital-metric--hgt {
+    grid-column: 1 / -1;
+    margin-top: 0.15rem;
+}
+
+.mc-vital-metric--hgt .mc-vital-metric__value {
+    color: #f0abfc;
+}
+
+.mc-brand-card {
+    margin: 0.15rem 0 0.95rem;
+    padding: 1.2rem 1.15rem 1.05rem;
+    border-radius: var(--radius-hero);
+    background:
+        radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 36%),
+        linear-gradient(180deg, rgba(18, 31, 54, 0.96) 0%, rgba(11, 20, 36, 0.98) 100%);
+    border: none;
+    box-shadow: var(--shadow-soft), 0 0 0 1px rgba(20, 184, 166, 0.12), var(--shadow-inset);
+}
+
+.mc-brand-logo-shell {
+    width: 132px;
+    margin: 0 auto 1rem;
+    padding: 12px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,245,249,0.94));
+    box-shadow: 0 16px 34px rgba(2, 6, 23, 0.22), 0 0 0 1px rgba(255,255,255,0.28) inset;
+}
+
+.mc-brand-logo {
+    display: block;
+    width: 100%;
+    border-radius: 18px;
+    object-fit: cover;
+}
+
+.mc-brand-kicker {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #2dd4bf;
+    margin-bottom: 0.55rem;
+}
+
+.mc-brand-company {
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+    margin-bottom: 0.55rem;
+}
+
+.mc-brand-user {
+    color: #e2ecf9;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin-bottom: 0.55rem;
+}
+
+.mc-brand-user span {
+    color: #a5b9d8;
+    font-weight: 700;
+}
+
+.mc-brand-copy {
+    color: #bfd0e6;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.mc-patient-card {
+    margin: 0.55rem 0 0.7rem;
+    padding: 0.85rem 0.95rem 0.8rem;
+    border-radius: 10px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mc-patient-card:hover {
+    background: #27354f;
+    border-color: #475569;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+}
+
+.mc-patient-card-kicker {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #38bdf8;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+}
+
+.mc-patient-card-name {
+    color: #f8fbff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+}
+
+.mc-patient-card-meta {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    font-weight: 500;
+}
+
+.mc-sidebar-alert-shell {
+    margin: 0.4rem 0 1rem;
+}
+
+.mc-sidebar-alert-card {
+    border: 1px solid;
+    border-radius: 14px;
+    padding: 0.85rem 0.88rem;
+    margin-top: 0.65rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.mc-sidebar-alert-title {
+    font-size: 0.98rem;
+    font-weight: 900;
+    margin-bottom: 0.34rem;
+    line-height: 1.25;
+}
+
+.mc-sidebar-alert-body {
+    font-size: 0.89rem;
+    line-height: 1.5;
+}
+
+[data-testid="stSidebar"] .stTextInput input {
+    border-radius: var(--radius-md) !important;
+    padding-left: 0.95rem !important;
+    min-height: 3rem !important;
+}
+
+[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div {
+    border-radius: var(--radius-md) !important;
+    min-height: 3.4rem !important;
+    background: linear-gradient(180deg, rgba(61, 82, 117, 0.98) 0%, rgba(50, 68, 98, 0.98) 100%) !important;
+    border: none !important;
+    box-shadow:
+        0 4px 18px rgba(2, 6, 18, 0.22),
+        0 0 0 1px rgba(96, 165, 250, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span {
+    font-weight: 700 !important;
+}
+
+[data-testid="stSidebar"] .stCheckbox {
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.35rem !important;
+}
+
+[data-testid="stSidebar"] .stCaptionContainer,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+    color: #8ea8cb !important;
+}
+
+[data-testid="stVerticalBlock"] > [style*="overflow: auto"],
+[data-testid="stVerticalBlock"] > [style*="overflow:auto"] {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(96, 165, 250, 0.45) rgba(15, 23, 42, 0.28);
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.35);
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.55), rgba(79, 70, 229, 0.55));
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.8), rgba(79, 70, 229, 0.8));
+}
+
+.mc-rx-mini-board {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.65rem;
+}
+
+.mc-rx-mini-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.72rem 0.84rem;
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(18, 28, 48, 0.96), rgba(11, 18, 32, 0.98));
+    border: 1px solid rgba(96, 165, 250, 0.14);
+}
+
+.mc-rx-mini-hour {
+    font-size: 0.84rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    color: #f8fafc;
+}
+
+.mc-rx-mini-speed {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #93c5fd;
+}
+
+.mc-rx-mini-more {
+    justify-content: center;
+    color: #cbd5e1;
+    font-weight: 700;
+}
+
+.mc-rx-board {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 0.6rem;
+}
+
+.mc-rx-card {
+    padding: 1rem 1rem 0.95rem;
+    border-radius: 24px;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(8, 15, 30, 0.99));
+    border: 1px solid rgba(96, 165, 250, 0.15);
+    box-shadow: 0 18px 36px rgba(2, 6, 23, 0.18);
+}
+
+.mc-rx-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.mc-rx-title {
+    color: #ffffff;
+    font-size: 1.02rem;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.mc-rx-meta {
+    margin-top: 0.32rem;
+    color: #cbd5e1;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.mc-rx-detail {
+    margin-top: 0.36rem;
+    color: #8fb3da;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.mc-rx-kpi-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.mc-rx-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 0.34rem 0.68rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    border: 1px solid transparent;
+}
+
+.mc-rx-pill-ok {
+    background: rgba(34, 197, 94, 0.14);
+    color: #bbf7d0;
+    border-color: rgba(34, 197, 94, 0.22);
+}
+
+.mc-rx-pill-no {
+    background: rgba(248, 113, 113, 0.14);
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, 0.22);
+}
+
+.mc-rx-pill-pend {
+    background: rgba(245, 158, 11, 0.14);
+    color: #fde68a;
+    border-color: rgba(245, 158, 11, 0.24);
+}
+
+.mc-rx-slots {
+    display: grid;
+    gap: 0.62rem;
+    margin-top: 0.9rem;
+}
+
+.mc-rx-slot {
+    display: grid;
+    grid-template-columns: 76px 112px minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.82rem 0.86rem;
+    border-radius: 18px;
+    background: rgba(2, 6, 23, 0.58);
+    border: 1px solid rgba(96, 165, 250, 0.08);
+}
+
+.mc-rx-slot-hour {
+    color: #f8fafc;
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+}
+
+.mc-rx-slot-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+}
+
+.mc-rx-slot-status-ok {
+    background: rgba(34, 197, 94, 0.14);
+    color: #bbf7d0;
+}
+
+.mc-rx-slot-status-no {
+    background: rgba(248, 113, 113, 0.14);
+    color: #fecaca;
+}
+
+.mc-rx-slot-status-pend {
+    background: rgba(245, 158, 11, 0.14);
+    color: #fde68a;
+}
+
+.mc-rx-slot-copy {
+    min-width: 0;
+}
+
+.mc-rx-slot-line {
+    color: #d8e7f9;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+    .block-container {
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+        padding-top: 0.8rem !important;
+    }
+
+    h1 {
+        font-size: clamp(1.6rem, 7vw, 2.1rem) !important;
+    }
+
+    h2 {
+        font-size: clamp(1.35rem, 6vw, 1.8rem) !important;
+    }
+
+    h3 {
+        font-size: clamp(1.1rem, 5vw, 1.4rem) !important;
+    }
+
+    .mc-brand-card {
+        padding: 1rem 0.9rem 0.92rem;
+        border-radius: var(--radius-lg);
+    }
+
+    .mc-brand-logo-shell {
+        width: 104px;
+        margin-bottom: 0.85rem;
+        padding: 10px;
+        border-radius: 20px;
+    }
+
+    .mc-brand-company {
+        font-size: 1.5rem;
+        line-height: 1.06;
+    }
+
+    .mc-brand-user {
+        font-size: 0.92rem;
+        line-height: 1.3;
+    }
+
+    .mc-brand-copy {
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+
+    .mc-patient-card {
+        padding: 0.8rem 0.85rem 0.75rem;
+        border-radius: 16px;
+    }
+
+    .mc-patient-card-name {
+        font-size: 0.92rem;
+    }
+
+    .mc-patient-card-meta {
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    div[data-testid="stForm"],
+    div[data-testid="stVerticalBlock"] > div[style*="border"],
+    div[data-testid="stExpander"] {
+        padding: 14px !important;
+        border-radius: 16px !important;
+    }
+
+    div[data-testid="stAlert"] {
+        border-radius: 16px !important;
+    }
+
+    [data-testid="stHorizontalBlock"] {
+        gap: 0.7rem !important;
+        flex-wrap: wrap !important;
+    }
+
+    [data-testid="stMetric"] {
+        min-height: 0 !important;
+        padding: 10px 12px !important;
+    }
+
+    .mc-grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .mc-hero {
+        padding: 12px 14px 10px;
+        border-radius: 18px;
+        margin-bottom: 0.5rem;
+    }
+
+    .mc-hero-title {
+        font-size: 1.28rem;
+        line-height: 1.18;
+    }
+
+    .mc-hero-text {
+        font-size: 0.94rem;
+        line-height: 1.5;
+    }
+
+    .mc-chip-row {
+        gap: 0.45rem;
+        margin-top: 0.75rem;
+    }
+
+    .mc-chip {
+        font-size: 0.82rem;
+        padding: 0.38rem 0.62rem;
+    }
+
+    .mc-callout {
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        margin: 0.45rem 0 0.65rem;
+        font-size: 0.82rem;
+        line-height: 1.35;
+    }
+
+    .mc-dynamic-island {
+        padding: 0.4rem 0.9rem 0.4rem 0.5rem;
+        margin: 0.3rem 0 0.5rem;
+    }
+    .mc-dynamic-island-text strong {
+        font-size: 0.8rem;
+    }
+    .mc-dynamic-island-meta {
+        font-size: 0.7rem;
+    }
+
+    .mc-module-strip {
+        position: sticky;
+        top: 0.1rem;
+        z-index: 20;
+        padding: 0.1rem 0.05rem 0.8rem;
+    }
+
+    .mc-module-pill {
+        font-size: 0.92rem;
+        padding: 0.72rem 0.95rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 18px rgba(2, 6, 23, 0.18);
+    }
+
+    .mc-module-shell {
+        position: sticky;
+        top: 0.1rem;
+        z-index: 20;
+        padding: 0.6rem 0.75rem 0.4rem;
+        margin-bottom: 0.5rem;
+        border-radius: 18px;
+
+    }
+
+    .mc-module-shell-head {
+        margin-bottom: 0.45rem;
+        padding: 0 0.18rem;
+    }
+
+    .mc-module-shell-kicker {
+        font-size: 0.7rem;
+    }
+
+    .mc-module-shell-title {
+        font-size: 1rem !important;
+    }
+
+    [data-testid="stPills"] [role="listbox"] {
+        gap: 0.78rem !important;
+        padding: 0.08rem 0.1rem 0.95rem !important;
+    }
+
+    [data-testid="stPills"] [role="option"] {
+        min-height: 46px !important;
+        padding: 0.82rem 1.02rem !important;
+        border-radius: 17px !important;
+    }
+
+    [data-testid="stPills"] [role="option"] p,
+    [data-testid="stPills"] [role="option"] span {
+        font-size: 0.9rem !important;
+    }
+
+    .mc-hero {
+        border-radius: 20px;
+        padding: 14px 14px 12px;
+        margin-bottom: 0.55rem;
+    }
+
+    .mc-hero-title {
+        font-size: 1.75rem;
+    }
+
+    .mc-hero-text {
+        font-size: 1rem;
+        color: #b6c6da;
+    }
+
+    [data-testid="stExpander"] {
+        width: 100% !important;
+    }
+
+    [data-testid="stExpander"] details {
+        width: 100% !important;
+    }
+
+    [data-testid="stExpander"] details summary {
+        min-height: 46px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .stButton > button,
+    .stDownloadButton > button {
+        min-height: 42px !important;
+        font-size: 0.94rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+    }
+
+    .mc-rx-card {
+        padding: 0.88rem 0.88rem 0.84rem;
+        border-radius: 20px;
+    }
+
+    .mc-rx-title {
+        font-size: 0.98rem;
+    }
+
+    .mc-rx-meta,
+    .mc-rx-detail {
+        font-size: 0.82rem;
+    }
+
+    .mc-rx-pill {
+        min-height: 29px;
+        font-size: 0.72rem;
+        padding: 0.28rem 0.58rem;
+    }
+
+    .mc-rx-slot {
+        grid-template-columns: 1fr;
+        gap: 0.46rem;
+        padding: 0.74rem 0.76rem;
+        border-radius: 16px;
+    }
+
+    .mc-rx-slot-hour {
+        font-size: 0.9rem;
+    }
+
+    .mc-rx-slot-status {
+        justify-self: start;
+    }
+
+    .mc-rx-slot-line {
+        font-size: 0.8rem;
+    }
+
+    .mc-rx-mini-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+
+    [data-baseweb="input"] > div,
+    [data-baseweb="select"] > div,
+    [data-baseweb="textarea"] > div,
+    textarea,
+    input[type="number"],
+    input[type="text"] {
+        min-height: 2.75rem !important;
+    }
+
+    iframe {
+        min-height: 320px !important;
+    }
+}
+
+/* Recetas: tarjetas (vista movil) — sin expander para evitar _arrow_right roto */
+.mc-rx-card-title {
+    font-weight: 800;
+    font-size: 1rem;
+    margin: 0 0 0.55rem 0;
+    color: #f8fafc;
+    line-height: 1.35;
+}
+
+.mc-rx-card-line {
+    margin: 0.28rem 0;
+    font-size: 0.94rem;
+    color: #e2e8f0;
+    line-height: 1.45;
+}
+
+.mc-rx-card-k {
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+/* --- Recetas: sábana 24 h y tablas HTML (móvil / tablet / tactil) --- */
+.mc-recetas-sabana-zone [class^="mc-sheet-shell-"],
+.mc-recetas-table-zone [class^="mc-table-shell-"] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+
+@media (max-width: 1024px) {
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] {
+        max-height: min(48vh, 400px);
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-rx {
+        min-width: 160px;
+        max-width: 260px;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] {
+        max-height: min(52vh, 440px);
+    }
+}
+
+@media (max-width: 640px) {
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] {
+        max-height: min(42vh, 320px);
+        border-radius: 14px;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] table {
+        font-size: 0.7rem;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] thead th {
+        padding: 6px 4px;
+        font-size: 0.68rem;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-val {
+        min-width: 52px;
+        max-width: 60px;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-rx {
+        min-width: 120px;
+        max-width: 180px;
+        padding: 6px 8px;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-rx-title {
+        font-size: 0.78rem;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-rx-meta,
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-rx-detail {
+        font-size: 0.65rem;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] tbody td {
+        min-width: 36px;
+        max-width: 44px;
+        padding: 4px 2px;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-badge {
+        min-width: 32px;
+        min-height: 28px;
+        font-size: 0.58rem;
+        border-radius: 8px;
+    }
+
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-validada {
+        min-width: 52px;
+        min-height: 24px;
+        font-size: 0.62rem;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] {
+        max-height: min(50vh, 360px);
+        border-radius: 14px;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] table {
+        font-size: 0.76rem;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] thead th {
+        padding: 8px 6px;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] tbody td {
+        padding: 6px 6px;
+    }
+}
+
+@media (pointer: coarse) {
+    .mc-recetas-sabana-zone [class^="mc-sheet-shell-"] .mc-sheet-badge {
+        min-width: 40px;
+        min-height: 36px;
+        padding: 4px 5px;
+    }
+}
+
+/* Tablas HTML Recetas: scroll + sin guiones automaticos (Safari iOS) */
+.mc-recetas-table-zone,
+.mc-recetas-table-zone [class^="mc-table-shell-"] {
+    hyphens: none !important;
+    -webkit-hyphens: none !important;
+}
+
+@media (max-width: 900px) {
+    [data-testid="stMarkdownContainer"] .mc-recetas-table-zone {
+        overflow-x: auto !important;
+        max-width: 100% !important;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] {
+        overflow-x: auto !important;
+        overflow-y: auto;
+        max-width: 100%;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] table {
+        width: max-content !important;
+        min-width: 100% !important;
+        table-layout: auto !important;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] thead th {
+        white-space: nowrap !important;
+        hyphens: none !important;
+        -webkit-hyphens: none !important;
+    }
+
+    .mc-recetas-table-zone [class^="mc-table-shell-"] tbody td {
+        min-width: 6rem !important;
+        max-width: none !important;
+        white-space: nowrap !important;
+        hyphens: none !important;
+        -webkit-hyphens: none !important;
+        overflow-wrap: normal !important;
+    }
+}
+
+/* Grillas Streamlit (data_editor / dataframe): scroll horizontal en modulos anchos */
+@media (max-width: 900px) {
+    [data-testid="stAppViewContainer"] [data-testid="stElementContainer"]:has([data-testid="stDataFrame"]) {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100%;
+    }
+
+    [data-testid="stAppViewContainer"] [data-testid="stElementContainer"]:has([data-testid="stDataEditor"]) {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100%;
+    }
+}
+
+/* ========== MediCare: responsive global, tablets y pulido UI ========== */
+:root {
+    --mc-safe-top: env(safe-area-inset-top, 0px);
+    --mc-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --mc-safe-left: env(safe-area-inset-left, 0px);
+    --mc-safe-right: env(safe-area-inset-right, 0px);
+    /* Botón sidebar móvil — estilo sólido Modern Enterprise */
+    --mc-glass-bg: #1e293b;
+    --mc-glass-border: #334155;
+    --mc-glass-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Contenedor principal Streamlit: no recortar altura; el scroll vertical lo lleva body/html. */
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+section.main,
+section.main > div {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    min-height: 0;
+}
+
+[data-testid="stTabs"] {
+    overflow: visible !important;
+}
+
+.block-container {
+    padding-top: 0.6rem !important;
+    padding-left: max(0.6rem, var(--mc-safe-left)) !important;
+    padding-right: max(0.6rem, var(--mc-safe-right)) !important;
+    padding-bottom: max(3rem, var(--mc-safe-bottom)) !important;
+}
+
+/* MOBILE: padding-top minimo. NO usar safe-area-inset-top aca porque el
+   top bar del browser ya respeta el notch; duplicar ese padding empuja
+   todo el login fuera del primer vistazo. Usar valor fijo chico. */
+@media (max-width: 767px) {
+    html body .block-container,
+    html body .stApp .block-container,
+    html body [data-testid="stAppViewContainer"] .block-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: max(5rem, var(--mc-safe-bottom)) !important;
+    }
+    /* Eliminar padding-top extra en stApp / stMain (si los hay) */
+    html body [data-testid="stAppViewContainer"],
+    html body [data-testid="stMain"],
+    html body section.main {
+        padding-top: 0 !important;
+    }
+    /* Header de Streamlit (top bar): no reservar espacio enorme */
+    html body header[data-testid="stHeader"] {
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+    }
+}
+
+/* ========== Botón sidebar móvil: Liquid Glass iOS 26 translúcido ========== */
+/* Este CSS override fuerza el estilo glass incluso si el JS inyectado está cacheado */
+@media (max-width: 767px) {
+    #mc-mobile-sidebar-toggle-btn,
+    #mc-mobile-sidebar-toggle-btn-v2 {
+        position: fixed !important;
+        left: 12px !important;
+        top: 12px !important;
+        transform: none !important;
+        -webkit-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
+        border-radius: 14px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        padding: 0 14px 0 12px !important;
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        color: #f8fafc !important;
+        font-family: system-ui, sans-serif !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.06em !important;
+        box-shadow: var(--mc-glass-shadow) !important;
+        cursor: pointer !important;
+        z-index: 10015 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        white-space: nowrap !important;
+        transition: opacity 0.15s, transform 0.18s, background 0.2s !important;
+    }
+    #mc-mobile-sidebar-toggle-btn:active,
+    #mc-mobile-sidebar-toggle-btn-v2:active {
+        opacity: 1 !important;
+        
+    }
+    /* Estado abierto: flechita pequeña */
+    #mc-mobile-sidebar-toggle-btn.is-open,
+    #mc-mobile-sidebar-toggle-btn-v2.is-open {
+        width: 32px !important;
+        min-width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+        gap: 0 !important;
+    }
+}
+
+/* TABLET: tambien reducido pero menos agresivo */
+@media (min-width: 768px) and (max-width: 1024px) {
+    html body .block-container {
+        padding-top: 0.9rem !important;
+        padding-bottom: max(4rem, var(--mc-safe-bottom)) !important;
+    }
+}
+
+/* Equipos o SO con "reducir movimiento": menos animaciones (accesibilidad y tablets lentas).
+   EXCEPCION: los spinners deben girar sino el usuario piensa que la app esta colgada. */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto !important;
+    }
+
+    .stApp *:not([data-testid="stSpinner"]):not([data-baseweb="spinner"]):not(.stSpinner):not(.mc-spinner) {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    [data-testid="stSpinner"],
+    [data-testid="stSpinner"] *,
+    .stSpinner,
+    .stSpinner *,
+    [data-baseweb="spinner"],
+    [data-baseweb="spinner"] * {
+        animation-duration: 0.85s !important;
+        animation-iteration-count: infinite !important;
+        animation-timing-function: linear !important;
+    }
+}
+
+@media (min-width: 1400px) {
+    .block-container {
+        max-width: min(1520px, 96vw) !important;
+    }
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: max(0.35rem, var(--mc-safe-top)) !important;
+    padding-bottom: max(0.35rem, var(--mc-safe-bottom)) !important;
+}
+
+[data-testid="stMarkdownContainer"] a {
+    color: #5eead4 !important;
+    text-underline-offset: 3px;
+    font-weight: 600;
+}
+
+[data-testid="stMarkdownContainer"] a:hover {
+    color: #99f6e4 !important;
+}
+
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+    gap: 0.45rem !important;
+    flex-wrap: wrap !important;
+    background: rgba(15, 23, 42, 0.55) !important;
+    padding: 0.5rem !important;
+    border-radius: var(--radius-md) !important;
+    border: none !important;
+    box-shadow: var(--shadow-card), var(--shadow-inset) !important;
+}
+
+[data-testid="stTabs"] [data-baseweb="tab"] {
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    min-height: 44px !important;
+    border: none !important;
+    background: rgba(25, 38, 63, 0.38) !important;
+    box-shadow: 0 4px 14px rgba(2, 6, 18, 0.14) !important;
+    transition: background 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.35) 0%, rgba(37, 99, 235, 0.22) 100%) !important;
+    border: none !important;
+    color: #f8fafc !important;
+    box-shadow:
+        0 12px 28px rgba(13, 148, 136, 0.14),
+        0 0 0 1px rgba(20, 184, 166, 0.42),
+        var(--shadow-inset) !important;
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
+    .mc-grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mc-module-shell {
+        border-radius: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.4rem !important;
+    }
+
+    [data-testid="stHorizontalBlock"] > [data-testid="column"],
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        align-self: auto !important;
+    }
+}
+
+@media (max-width: 520px) {
+    [data-testid="stPills"] [role="listbox"] {
+        flex-wrap: wrap !important;
+        overflow-x: visible !important;
+        row-gap: 0.4rem !important;
+        gap: 0.35rem !important;
+    }
+
+    [data-testid="stPills"] [role="option"] {
+        flex: 1 1 auto !important;        /* Flexible según contenido */
+        min-width: unset !important;       /* Sin ancho mínimo forzado */
+        max-width: 100% !important;
+        white-space: normal !important;    /* Permitir saltos de línea */
+        text-align: left !important;       /* Alineación natural */
+        justify-content: flex-start !important;
+        min-height: 40px !important;
+        padding: 0.4rem 0.7rem !important;
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+        word-break: break-word !important;
+    }
+
+    [data-testid="stPills"] [role="option"] p,
+    [data-testid="stPills"] [role="option"] span {
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+        text-align: left !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+}
+
+[data-testid="stDataFrame"],
+[data-testid="stDataFrame"] > div {
+    border-radius: var(--radius-md) !important;
+}
+
+div[data-testid="stDataFrame"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100%;
+}
+
+.stColumn > div[data-testid="stVerticalBlock"] {
+    gap: 0.5rem;
+}
+
+[data-testid="stCaptionContainer"] {
+    line-height: 1.5 !important;
+}
+
+/* ===== SIDEBAR FIJO DESKTOP/TABLET (>= 768px) ===== */
+/* DESHABILITADO: position: sticky con display:flex rompe layout de Streamlit 1.36+ en desktop,
+   causando que el área principal quede vacía/negra. Streamlit maneja sidebar nativamente bien. */
+/*
+@media (min-width: 768px) {
+    [data-testid="stAppViewContainer"] {
+        min-height: 100vh !important;
+        display: flex !important;
+        flex-direction: row !important;
+        margin-left: 0 !important;
+    }
+
+    [data-testid="stSidebar"] {
+        position: sticky !important;
+        position: -webkit-sticky !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        width: 21rem !important;
+        min-width: 21rem !important;
+        max-width: 21rem !important;
+        flex-shrink: 0 !important;
+        align-self: flex-start !important;
+        z-index: 100 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        background: var(--bg-sidebar, #090e1a) !important;
+        border-right: 1px solid rgba(148, 163, 184, 0.12) !important;
+        box-shadow: 4px 0 24px rgba(2, 6, 18, 0.35) !important;
+        transform: none !important;
+        transition: none !important;
+    }
+
+    [data-testid="stSidebar"] > div:first-child {
+        height: 100% !important;
+        min-height: 100% !important;
+        max-height: 100vh !important;
+        overflow-y: auto !important;
+        background: transparent !important;
+    }
+
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"][aria-hidden="false"],
+    [data-testid="stSidebar"][aria-hidden="true"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="collapsedControl"],
+    [data-testid="stExpandSidebarButton"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    [data-testid="stSidebar"] + div,
+    [data-testid="stSidebar"] ~ div[class*="resize"],
+    div[class*="resize"][style*="cursor: col-resize"],
+    div[class*="resizer"],
+    [data-testid="stSidebar"] [class*="resizer"],
+    [data-testid="stSidebar"] [class*="resize-handle"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        cursor: default !important;
+    }
+
+    [data-testid="stSidebar"] {
+        resize: none !important;
+        pointer-events: auto !important;
+    }
+
+    .stApp > header {
+        display: none !important;
+    }
+
+    [data-testid="stAppViewContainer"] > section[data-testid="stAppViewContent"],
+    [data-testid="stAppViewContainer"] > section:last-child,
+    section.main {
+        flex: 1 !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        margin-left: 0 !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        overflow-x: hidden !important;
+    }
+
+    .block-container {
+        max-width: 100% !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+*/
+
+/* ===== OPTIMIZACIONES MÓVILES Y TABLETS ===== */
+
+/* SIDEBAR MOVIL LEGACY: mantenemos solo ajustes internos, no layout ni visibilidad */
+@media (max-width: 768px) {
+
+    /* 1. RESET: Anular estilos de desktop para sidebar */
+    [data-testid="stSidebar"] {
+        position: relative !important; /* Reset de sticky */
+        left: auto !important;
+        top: auto !important;
+        height: auto !important;
+        width: 85vw !important; /* Ancho drawer mobile */
+        min-width: 280px !important;
+        max-width: 90vw !important;
+        flex-shrink: 1 !important;
+        align-self: auto !important;
+        z-index: 999999 !important; /* Por encima de todo */
+        box-shadow: 8px 0 32px rgba(2, 6, 18, 0.55) !important;
+        transform: none !important;
+        transition: transform 0.3s ease !important;
+    }
+
+    /* 2. RESET: Anular flex y margin del contenedor principal */
+    [data-testid="stAppViewContainer"] {
+        display: block !important; /* Reset de flex */
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* 3. Contenedor principal: padding uniforme sin margen sobrante */
+    [data-testid="block-container"] {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* 4. Sección principal sin margen izquierdo y ancho completo */
+    [data-testid="stAppViewContainer"] > section.main,
+    section.main {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* 5. Asegurar que el botón de colapsar sidebar esté visible en mobile */
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="collapsedControl"],
+    button[kind="header"] {
+        display: flex !important;
+        visibility: visible !important;
+    }
+    
+    /* Botones más grandes para touch */
+    [data-testid="stSidebar"] button {
+        min-height: 44px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Selectbox de pacientes más alto para touch */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] > div > div {
+        min-height: 44px !important;
+    }
+    
+    /* Inputs más grandes para touch */
+    [data-testid="stSidebar"] input,
+    [data-testid="stSidebar"] textarea {
+        min-height: 44px !important;
+        font-size: 16px !important; /* Previene zoom en iOS */
+    }
+    
+    /* Reducir padding en sidebar para más espacio */
+    [data-testid="stSidebar"] > div:first-child {
+        padding: 0.5rem !important;
+    }
+    
+    /* Cards de paciente más compactas */
+    .mc-patient-card {
+        padding: 0.65rem 0.75rem 0.6rem !important;
+        border-radius: 14px !important;
+    }
+
+    .mc-patient-card-name {
+        font-size: 0.88rem !important;
+    }
+
+    .mc-patient-card-meta {
+        font-size: 0.75rem !important;
+    }
+    
+    /* Brand card más compacto */
+    .mc-brand-card {
+        padding: 0.75rem !important;
+    }
+    
+    .mc-brand-logo {
+        width: 36px !important;
+        height: 36px !important;
+    }
+}
+
+/* Tablets: ajustes de sidebar — DESHABILITADOS para evitar conflicto con layout nativo de Streamlit.
+   En desktop/tablet Streamlit maneja el sidebar correctamente sin margin-left manual.
+@media (min-width: 769px) and (max-width: 1024px) {
+    [data-testid="stSidebar"] {
+        width: 300px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+    }
+    [data-testid="stAppViewContainer"] {
+        margin-left: 300px !important;
+    }
+    [data-testid="stAppViewContainer"] > section.main,
+    section.main {
+        max-width: calc(100% - 300px) !important;
+    }
+} */
+
+/* Touch-friendly targets en todos los dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+    button,
+    [role="button"],
+    .stButton > button {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+    
+    select,
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+        min-height: 44px !important;
+    }
+    
+    /* Aumentar espaciado entre elementos clickeables */
+    .stRadio > div[role="radiogroup"] > label,
+    .stCheckbox > div[role="checkbox"] > label {
+        padding: 0.5rem 0 !important;
+    }
+}
+
+/* Animaciones reducidas para dispositivos lentos */
+@media (prefers-reduced-motion: reduce),
+       (max-width: 480px) {
+    .mc-patient-card,
+    .mc-brand-card,
+    .mc-sidebar-alert-card,
+    .mc-evol-card {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* Botones tipo link (Streamlit link_button / markdown) */
+.stElementContainer:has(a[data-testid="stLinkButton"]) a,
+a[data-testid="stLinkButton"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 48px !important;
+    padding: 0.55rem 1.1rem !important;
+    border-radius: 14px !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, rgba(18, 94, 159, 0.5) 0%, rgba(79, 70, 229, 0.38) 100%) !important;
+    border: 1px solid rgba(96, 165, 250, 0.38) !important;
+    box-shadow: 0 12px 26px rgba(2, 6, 23, 0.22) !important;
+    text-decoration: none !important;
+}
+
+/* Pointer grueso: áreas táctiles */
+@media (pointer: coarse) {
+    .stButton > button,
+    .stDownloadButton > button {
+        min-height: 50px !important;
+    }
+
+    [data-testid="stCheckbox"] label,
+    [data-testid="stRadio"] label {
+        min-height: 48px !important;
+    }
+}
+
+/* ========== Modo liviano: equipos viejos / poca RAM (clase en <html> vía JS) ========== */
+html.mc-equipo-liviano,
+html.mc-equipo-liviano body {
+    scroll-behavior: auto !important;
+}
+
+html.mc-equipo-liviano * {
+    animation: none !important;
+    transition: none !important;
+}
+
+html.mc-equipo-liviano .mc-hero,
+html.mc-equipo-liviano .mc-module-shell,
+html.mc-equipo-liviano .mc-brand-card,
+html.mc-equipo-liviano .mc-callout,
+html.mc-equipo-liviano .mc-card,
+html.mc-equipo-liviano [data-testid="stMetric"],
+html.mc-equipo-liviano div[data-testid="stForm"],
+html.mc-equipo-liviano div[data-testid="stAlert"] {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+html.mc-equipo-liviano .mc-hero {
+    padding: 14px 14px 12px !important;
+    margin-bottom: 0.75rem !important;
+    border-radius: 18px !important;
+}
+
+html.mc-equipo-liviano .mc-module-shell {
+    padding: 0.75rem 0.85rem 0.65rem !important;
+    margin-bottom: 0.85rem !important;
+    border-radius: 18px !important;
+    position: static !important;
+}
+
+html.mc-equipo-liviano .mc-grid-3 {
+    gap: 0.65rem !important;
+}
+
+html.mc-equipo-liviano .mc-brand-company {
+    font-size: 1.35rem !important;
+    line-height: 1.1 !important;
+}
+
+html.mc-equipo-liviano .stButton > button:hover,
+html.mc-equipo-liviano .stDownloadButton > button:hover {
+    transform: none !important;
+}
+
+html.mc-equipo-liviano [data-testid="stPills"] [role="option"] {
+    box-shadow: none !important;
+}
+
+html.mc-equipo-liviano [data-testid="stTabs"] [data-baseweb="tab-list"],
+html.mc-equipo-liviano [data-testid="stTabs"] [data-baseweb="tab"] {
+    box-shadow: none !important;
+}
+
+/* Modo liviano: inputs sin sombras pesadas (menos compositing en GPUs viejas). */
+html.mc-equipo-liviano [data-baseweb="input"] > div,
+html.mc-equipo-liviano [data-baseweb="select"] > div,
+html.mc-equipo-liviano [data-baseweb="textarea"] > div,
+html.mc-equipo-liviano [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div {
+    box-shadow: none !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+html.mc-equipo-liviano [data-baseweb="input"] > div:focus-within,
+html.mc-equipo-liviano [data-baseweb="select"] > div:focus-within,
+html.mc-equipo-liviano [data-baseweb="textarea"] > div:focus-within {
+    border-color: rgba(20, 184, 166, 0.55) !important;
+    box-shadow: none !important;
+}
+
+html.mc-equipo-liviano [data-testid="stFileUploaderDropzone"] {
+    box-shadow: none !important;
+    border: 2px dashed rgba(96, 165, 250, 0.38) !important;
+}
+
+html.mc-equipo-liviano [data-testid="stFileUploaderDropzone"]:focus-within {
+    box-shadow: none !important;
+    border-color: rgba(20, 184, 166, 0.55) !important;
+}
+
+html.mc-equipo-liviano .mc-inv-alert,
+html.mc-equipo-liviano .mc-inv-mini {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+html.mc-equipo-liviano .mc-vital-card {
+    box-shadow: none !important;
+}
+
+html.mc-equipo-liviano .mc-inv-stat,
+html.mc-equipo-liviano .mc-inv-chip {
+    box-shadow: none !important;
+}
+
+html.mc-equipo-liviano [data-testid="stSlider"] [data-baseweb="slider"] [data-baseweb="thumb"],
+html.mc-equipo-liviano [data-testid="stSlider"] [role="slider"] {
+    box-shadow: none !important;
+    border-width: 1px !important;
+}
+
+html.mc-equipo-liviano [data-testid="stSliderThumbValue"] {
+    box-shadow: none !important;
+    background: rgba(15, 23, 42, 0.95) !important;
+    border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+html.mc-equipo-liviano [data-baseweb="popover"] [data-baseweb="menu"],
+html.mc-equipo-liviano [data-baseweb="popover"] ul[role="listbox"] {
+    box-shadow: none !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+}
+
+html.mc-equipo-liviano .block-container {
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.85rem !important;
+}
+
+html.mc-equipo-liviano iframe {
+    max-width: 100% !important;
+}
+
+/* ========== Pulido accesibilidad y detalle ========== */
+::selection {
+    background: rgba(20, 184, 166, 0.35);
+    color: #f8fafc;
+}
+
+.stButton > button:focus-visible,
+.stDownloadButton > button:focus-visible,
+[data-testid="stBaseButton-secondary"]:focus-visible {
+    outline: 2px solid rgba(20, 184, 166, 0.75) !important;
+    outline-offset: 2px !important;
+}
+
+[data-testid="stMetricDelta"] {
+    font-weight: 700 !important;
+}
+
+/* ========== Estados vacíos y onboarding ========== */
+.mc-empty-state {
+    display: flex;
+    align-items: flex-start;
+    border-radius: var(--radius-md);
+    border: none;
+    background: linear-gradient(145deg, rgba(22, 32, 52, 0.55), rgba(12, 18, 32, 0.88));
+    box-shadow: var(--shadow-card), var(--shadow-inset);
+}
+
+/* Compacto (por defecto en código): encaja en columnas y listas */
+.mc-empty-state.mc-empty-state--compact {
+    gap: 0.55rem;
+    padding: 0.65rem 0.85rem;
+    margin: 0.35rem 0 0.65rem;
+    box-shadow: var(--shadow-card), var(--shadow-inset);
+}
+
+.mc-empty-state.mc-empty-state--compact .mc-empty-icon {
+    font-size: 1rem;
+    margin-top: 0.06rem;
+}
+
+.mc-empty-state.mc-empty-state--compact .mc-empty-title {
+    margin: 0 0 0.2rem !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+}
+
+.mc-empty-state.mc-empty-state--compact .mc-empty-text {
+    font-size: 0.8rem !important;
+    line-height: 1.45 !important;
+}
+
+.mc-empty-state.mc-empty-state--compact .mc-empty-sug {
+    margin: 0.35rem 0 0 !important;
+    font-size: 0.75rem !important;
+    line-height: 1.4 !important;
+}
+
+/* Relajado: más aire para mensajes centrales de pantalla */
+.mc-empty-state.mc-empty-state--relaxed {
+    gap: 1rem;
+    padding: 1.25rem 1.35rem;
+    margin: 0.75rem 0 1.1rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.mc-empty-state.mc-empty-state--relaxed .mc-empty-icon {
+    font-size: 1.35rem;
+}
+
+.mc-empty-state.mc-empty-state--relaxed .mc-empty-title {
+    margin: 0 0 0.35rem !important;
+    font-size: 1.05rem !important;
+}
+
+.mc-empty-state.mc-empty-state--relaxed .mc-empty-text {
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+}
+
+.mc-empty-state.mc-empty-state--relaxed .mc-empty-sug {
+    margin: 0.65rem 0 0 !important;
+    font-size: 0.88rem !important;
+}
+
+.mc-empty-icon {
+    flex-shrink: 0;
+    line-height: 1;
+    color: var(--accent);
+    opacity: 0.95;
+}
+
+.mc-empty-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.mc-empty-title {
+    margin: 0 !important;
+    font-weight: 800 !important;
+    color: var(--text-main) !important;
+}
+
+.mc-empty-text {
+    margin: 0 !important;
+    color: var(--text-muted) !important;
+}
+
+.mc-empty-sug {
+    margin: 0 !important;
+    font-weight: 600 !important;
+    color: var(--accent) !important;
+}
+
+.mc-onboarding-box {
+    padding: 0.65rem 0 0.35rem;
+    margin-bottom: 0.35rem;
+}
+
+.mc-onboarding-lead {
+    margin: 0 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    color: var(--text-muted) !important;
+}
+
+/* Pantalla de acceso (login / olvidé contraseña): selector principal centrado */
+[data-testid="stVerticalBlock"] [data-testid="stRadio"] [role="radiogroup"] {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem 1.25rem !important;
+}
+
+/* Cortina de medicación — resumen visual del turno (Recetas) */
+.mc-cortina-panel {
+    border: 1px solid rgba(20, 184, 166, 0.22);
+    border-radius: var(--radius-md);
+    background:
+        linear-gradient(145deg, rgba(26, 39, 64, 0.5) 0%, rgba(12, 18, 32, 0.82) 100%),
+        radial-gradient(ellipse 90% 80% at 100% 0%, rgba(20, 184, 166, 0.08), transparent 55%);
+    padding: 1rem 1.15rem 1.15rem;
+    margin: 0.35rem 0 1.1rem;
+    box-shadow: var(--shadow-inset), 0 14px 42px rgba(2, 6, 18, 0.28);
+}
+
+.mc-cortina-intro {
+    margin: 0 0 0.85rem !important;
+    font-size: 0.82rem !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+}
+
+.mc-cortina-rapida-titulo {
+    margin: 0 0 0.35rem !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary, #e2e8f0) !important;
+    letter-spacing: 0.01em;
+}
+
+/* Planilla MAR (cortina estilo hoja hospitalaria — Recetas) */
+.mc-mar-encabezado {
+    margin: 0 0 0.5rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: rgba(148, 163, 184, 0.95) !important;
+}
+
+.mc-mar-validado {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: rgba(148, 163, 184, 0.88) !important;
+    line-height: 1.3 !important;
+    padding-top: 0.35rem !important;
+    max-width: 4.6rem;
+    word-break: break-word;
+    cursor: help;
+}
+
+.mc-mar-block {
+    border-radius: 10px;
+    padding: 10px 12px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.mc-mar-block--pend {
+    border-left: 4px solid rgba(251, 191, 36, 0.85);
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.07) 0%, rgba(15, 23, 42, 0.4) 52%);
+}
+
+.mc-mar-block--ok {
+    border-left: 4px solid var(--success);
+    background: linear-gradient(90deg, rgba(52, 211, 153, 0.12) 0%, rgba(15, 23, 42, 0.4) 52%);
+}
+
+.mc-mar-block--no {
+    border-left: 4px solid var(--danger);
+    background: linear-gradient(90deg, rgba(248, 113, 113, 0.1) 0%, rgba(15, 23, 42, 0.4) 52%);
+}
+
+.mc-mar-title {
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: var(--text-primary, #e2e8f0) !important;
+    line-height: 1.3 !important;
+    margin: 0 0 4px !important;
+}
+
+.mc-mar-sub {
+    font-size: 0.78rem !important;
+    color: rgba(148, 163, 184, 0.95) !important;
+    line-height: 1.35 !important;
+    margin: 0 0 4px !important;
+}
+
+.mc-mar-detail {
+    font-size: 0.76rem !important;
+    color: rgba(203, 213, 225, 0.92) !important;
+    line-height: 1.4 !important;
+    margin: 0 0 6px !important;
+}
+
+.mc-mar-ritmo {
+    font-size: 0.74rem !important;
+    color: rgba(94, 234, 212, 0.88) !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    margin: 0 !important;
+}
+
+.mc-mar-firma {
+    color: rgba(148, 163, 184, 0.95) !important;
+    font-weight: 600 !important;
+}
+
+.mc-mar-chip {
+    display: inline-block;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.mc-mar-chip--ok {
+    background: rgba(52, 211, 153, 0.2);
+    color: #6ee7b7;
+    border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.mc-mar-chip--no {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.mc-mar-chip-note {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: rgba(203, 213, 225, 0.88);
+    line-height: 1.35;
+}
+
+.mc-cortina-resumen {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.mc-cortina-row {
+    padding: 12px 14px 13px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(15, 23, 42, 0.42);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.mc-cortina-row--ok {
+    border-left: 4px solid var(--success);
+    background: linear-gradient(90deg, rgba(52, 211, 153, 0.14) 0%, rgba(15, 23, 42, 0.35) 55%);
+}
+
+.mc-cortina-row--no {
+    border-left: 4px solid var(--danger);
+    background: linear-gradient(90deg, rgba(248, 113, 113, 0.12) 0%, rgba(15, 23, 42, 0.35) 55%);
+}
+
+.mc-cortina-row--pend {
+    border-left: 4px solid rgba(251, 191, 36, 0.75);
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, rgba(15, 23, 42, 0.35) 55%);
+}
+
+.mc-cortina-row-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 6px;
+}
+
+.mc-cortina-badge {
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.mc-cortina-badge--ok {
+    background: rgba(52, 211, 153, 0.22);
+    color: var(--success);
+}
+
+.mc-cortina-badge--no {
+    background: rgba(248, 113, 113, 0.22);
+    color: #fecaca;
+}
+
+.mc-cortina-badge--pend {
+    background: rgba(251, 191, 36, 0.18);
+    color: var(--warning);
+}
+
+.mc-cortina-med {
+    font-weight: 800;
+    font-size: 0.98rem;
+    color: var(--text-main);
+}
+
+.mc-cortina-times {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.mc-cortina-times b {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.mc-cortina-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.mc-cortina-detalle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 6px;
+}
+
+.mc-cortina-obs {
+    font-size: 0.8rem;
+    color: #fecaca;
+    margin-top: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.mc-cortina-obs-lbl {
+    font-weight: 800;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #fca5a5;
+    margin-right: 6px;
+}
+
+.mc-cortina-firma {
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-top: 6px;
+}
+
+.mc-cortina-firma--empty {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ——— Recetas: módulo premium (orden, trazabilidad legal, lectura clínica) ——— */
+.mc-rx-hero-premium {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 1.55rem 1.65rem 1.35rem;
+    margin: 0 0 1rem 0;
+    background:
+        radial-gradient(ellipse 100% 80% at 100% 0%, rgba(20, 184, 166, 0.16), transparent 52%),
+        radial-gradient(ellipse 80% 60% at 0% 100%, rgba(59, 130, 246, 0.1), transparent 50%),
+        linear-gradient(155deg, rgba(18, 32, 54, 0.98) 0%, rgba(8, 14, 28, 0.99) 100%);
+    border: 1px solid rgba(20, 184, 166, 0.22);
+    box-shadow: 0 24px 56px rgba(2, 6, 20, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mc-rx-hero-premium::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(125deg, transparent 40%, rgba(255, 255, 255, 0.03) 48%, transparent 56%);
+    pointer-events: none;
+}
+
+.mc-rx-hero-premium .mc-rx-hero-kicker {
+    position: relative;
+    margin: 0 0 0.45rem 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(45, 212, 191, 0.85);
+}
+
+.mc-rx-hero-premium .mc-rx-hero-title {
+    position: relative;
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: #f8fbff;
+    line-height: 1.15;
+}
+
+.mc-rx-hero-premium .mc-rx-hero-lead {
+    position: relative;
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.62;
+    color: #cbd5e1;
+    max-width: 52rem;
+}
+
+.mc-rx-trust-bar {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem 1.1rem;
+    margin-top: 1.15rem;
+    padding: 0.75rem 1rem;
+    border-radius: 16px;
+    background: rgba(2, 6, 23, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.mc-rx-trust-ico {
+    font-size: 1.15rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 10px rgba(20, 184, 166, 0.35));
+}
+
+.mc-rx-trust-text {
+    flex: 1;
+    min-width: 200px;
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
+.mc-rx-trust-text strong {
+    color: #5eead4;
+    font-weight: 800;
+}
+
+.mc-rx-chip-row-premium {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.95rem;
+}
+
+.mc-rx-chip-premium {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.38rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.22);
+    color: #bfdbfe;
+}
+
+.mc-rx-chip-premium.mc-rx-chip--legal {
+    background: rgba(20, 184, 166, 0.12);
+    border-color: rgba(45, 212, 191, 0.28);
+    color: #99f6e4;
+}
+
+.mc-rx-chip-premium.mc-rx-chip--safe {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.25);
+    color: #fde68a;
+}
+
+.mc-rx-pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.85rem;
+    margin: 0 0 1.25rem 0;
+}
+
+@media (max-width: 900px) {
+    .mc-rx-pillars {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mc-rx-pillar {
+    padding: 1rem 1.1rem 1.05rem;
+    border-radius: 20px;
+    background: linear-gradient(165deg, rgba(26, 36, 56, 0.88) 0%, rgba(14, 22, 40, 0.95) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: 0 14px 36px rgba(2, 6, 18, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.mc-rx-pillar h4 {
+    margin: 0 0 0.4rem 0 !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: #f1f5f9 !important;
+    letter-spacing: -0.02em;
+}
+
+.mc-rx-pillar p {
+    margin: 0 !important;
+    font-size: 0.84rem !important;
+    line-height: 1.55 !important;
+    color: #94a3b8 !important;
+}
+
+.mc-rx-pillar-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    margin-bottom: 0.45rem;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    color: #0f172a;
+    background: linear-gradient(135deg, #2dd4bf, #38bdf8);
+}
+
+.mc-rx-callout-care {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 0.95rem 1.1rem;
+    margin: 0 0 1.1rem 0;
+    border-radius: 18px;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(15, 23, 42, 0.55) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 0 12px 32px rgba(2, 6, 18, 0.18);
+}
+
+.mc-rx-callout-care .mc-rx-callout-ico {
+    font-size: 1.35rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.mc-rx-callout-care p {
+    margin: 0 !important;
+    font-size: 0.9rem !important;
+    line-height: 1.55 !important;
+    color: #e2e8f0 !important;
+}
+
+.mc-rx-section-head {
+    margin: 1.35rem 0 0.85rem 0;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid rgba(20, 184, 166, 0.15);
+}
+
+.mc-rx-section-head.mc-rx-section-head--tight {
+    margin-top: 0.75rem;
+}
+
+.mc-rx-section-title {
+    margin: 0 0 0.35rem 0 !important;
+    font-size: 1.28rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em;
+    color: #f8fafc !important;
+}
+
+.mc-rx-section-head h4.mc-rx-section-title {
+    font-size: 1.08rem !important;
+}
+
+.mc-rx-section-sub {
+    margin: 0 !important;
+    font-size: 0.88rem !important;
+    line-height: 1.5 !important;
+    color: #94a3b8 !important;
+    font-weight: 500;
+}
+
+.mc-rx-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.35rem;
+    margin: 0 0 1rem 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: rxstep;
+}
+
+.mc-rx-flow li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.72rem 0.42rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+
+.mc-rx-flow-n {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.45rem;
+    height: 1.45rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    color: #042f2e;
+    background: linear-gradient(135deg, #5eead4, #38bdf8);
+}
+
+.mc-rx-turno-hint {
+    margin: 0 0 0.75rem 0 !important;
+    font-size: 0.82rem !important;
+    color: #94a3b8 !important;
+    font-style: italic;
+}
+
+.mc-rx-form-shell {
+    margin: 0 0 1.15rem 0;
+    padding: 1rem 1.1rem 1.05rem;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(22, 32, 52, 0.55) 0%, rgba(12, 18, 32, 0.75) 100%);
+    border: 1px solid rgba(20, 184, 166, 0.12);
+}
+
+.mc-rx-form-shell .mc-rx-form-shell-title {
+    margin: 0 0 0.5rem 0 !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: #f1f5f9 !important;
+}
+
+.mc-rx-form-shell .mc-rx-form-shell-sub {
+    margin: 0 0 0.75rem 0 !important;
+    font-size: 0.8rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.45 !important;
+}
+
+.mc-rx-ficha-topbar {
+    height: 3px;
+    border-radius: 3px;
+    margin: 0 0 0.65rem 0;
+    background: linear-gradient(90deg, rgba(20, 184, 166, 0.9), rgba(59, 130, 246, 0.85), rgba(167, 139, 250, 0.65));
+    opacity: 0.95;
+}
+
+.mc-rx-table-zone-title {
+    margin: 1.25rem 0 0.4rem 0 !important;
+    font-size: 1.12rem !important;
+    font-weight: 800 !important;
+    color: #f1f5f9 !important;
+}
+
+.mc-cortina-panel.mc-cortina-panel--premium {
+    border-color: rgba(20, 184, 166, 0.28);
+    box-shadow:
+        0 18px 48px rgba(2, 6, 18, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+
+/* ========================================================================
+   SISTEMA RESPONSIVE UNIFICADO - PC, TABLETS, MOVILES
+   Breakpoints:
+   - Mobile:  < 768px
+   - Tablet:  768px - 1024px
+   - Desktop: > 1024px
+   ======================================================================== */
+
+/* --- CONTROLES NATIVOS DEL SIDEBAR: ocultar SOLO en mobile/tablet — en desktop son necesarios --- */
+@media (max-width: 992px) {
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] *,
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] *,
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stExpandSidebarButton"] * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Sidebar colapsado en mobile/tablet: sin franja, sin espacio */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        flex: 0 0 0px !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    section[data-testid="stSidebar"][aria-expanded="false"] > div {
+        display: none !important;
+        width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Main ocupa todo el ancho cuando sidebar colapsado */
+    section[data-testid="stSidebar"][aria-expanded="false"] ~ [data-testid="stMain"],
+    section[data-testid="stSidebar"][aria-expanded="false"] ~ section[data-testid="stMain"] {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    /* Header: eliminar espacio en mobile/tablet */
+    header[data-testid="stHeader"] {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+    }
+
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stMain"] > div,
+    .main,
+    .main > div {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+}
+
+/* --- DESKTOP (> 1024px) --- */
+@media (min-width: 1025px) {
+    .block-container {
+        max-width: 1500px !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+
+    /* Sidebar fijo y persistente: nunca colapsar en desktop */
+    [data-testid="stSidebar"] {
+        min-width: 320px !important;
+        max-width: 360px !important;
+        width: 320px !important;
+    }
+
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        min-width: 320px !important;
+        max-width: 360px !important;
+        width: 320px !important;
+        flex: 0 0 320px !important;
+        overflow: visible !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    section[data-testid="stSidebar"][aria-expanded="false"] > div {
+        display: block !important;
+        width: auto !important;
+        overflow: visible !important;
+    }
+
+    /* Ocultar botón colapsar sidebar en desktop */
+    [data-testid="stSidebar"] button[kind="header"],
+    [data-testid="stSidebar"] button[kind="headerNoSpacing"],
+    [data-testid="stSidebar"] button[kind="headerNoPadding"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+}
+
+/* --- TABLET (768px - 1024px) --- */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .block-container {
+        max-width: 100% !important;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    [data-testid="stSidebar"] {
+        min-width: 280px !important;
+        max-width: 320px !important;
+    }
+
+    /* Columnas mas compactas */
+    [data-testid="column"] {
+        padding: 0 0.4rem !important;
+    }
+
+    /* Reducir espacios muertos entre elementos */
+    [data-testid="stVerticalBlock"] {
+        gap: 0.5rem !important;
+    }
+    [data-testid="element-container"],
+    .element-container {
+        margin-bottom: 0.3rem !important;
+    }
+    .mc-hero {
+        padding: 18px 18px 16px !important;
+        margin-bottom: 0.7rem !important;
+    }
+    .mc-module-shell {
+        padding: 0.85rem 0.95rem 0.6rem !important;
+        margin-bottom: 0.7rem !important;
+    }
+
+    /* Botones optimizados para touch */
+    .stButton > button,
+    .stDownloadButton > button {
+        min-height: 46px !important;
+        font-size: 0.95rem !important;
+    }
+
+    /* Reducir sombras pesadas */
+    div[data-testid="stForm"],
+    div[data-testid="stExpander"] {
+        box-shadow: 0 6px 18px rgba(2, 6, 18, 0.3) !important;
+    }
+
+    /* Tablas con scroll horizontal */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"] {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* --- MOVIL (< 768px) - OPTIMIZACION AGRESIVA --- */
+@media (max-width: 767px) {
+    /* NOTA: NO matamos animaciones globalmente porque eso rompe el spinner
+       de cargando (queda tildado). Los phones modernos manejan bien las
+       animaciones CSS; las optimizaciones reales son desactivar blur y
+       reducir shadows pesados, lo cual se hace mas abajo. */
+
+    /* Reducir solo transiciones hover (no aplican en touch de todas formas) */
+    *:hover {
+        transition-duration: 0.1s !important;
+    }
+
+    /* Desactivar blur (muy costoso en movil) */
+    *, *::before, *::after {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* Block container full width en movil */
+    .block-container {
+        max-width: 100% !important;
+        padding-top: 1.2rem !important;
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+        padding-bottom: 0.8rem !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    /* App container: no cortar contenido */
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    section.main {
+        padding-left: 0 !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Sidebar en movil: NO position:fixed, NO min-width forzado.
+       Streamlit maneja el colapso nativamente; solo ajustamos padding interno. */
+    [data-testid="stSidebar"] > div:first-child {
+        padding: 0.75rem 0.5rem !important;
+        overflow-y: auto !important;
+    }
+
+    /* Contenido principal siempre a pantalla completa en movil */
+    [data-testid="stMain"] {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Botones tama�o touch optimo */
+    .stButton > button,
+    .stDownloadButton > button,
+    [data-testid="stFormSubmitButton"] button {
+        min-height: 48px !important;
+        font-size: 0.95rem !important;
+        padding: 0.7rem 0.9rem !important;
+        box-shadow: 0 3px 10px rgba(2, 6, 18, 0.25) !important;
+        transition: none !important;
+    }
+
+    .stButton > button:hover,
+    .stButton > button:active,
+    .stDownloadButton > button:hover,
+    .stDownloadButton > button:active {
+        transform: none !important;
+    }
+
+    /* Inputs con font-size >= 16px para evitar zoom en iOS */
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="search"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    [data-baseweb="input"] input,
+    [data-baseweb="textarea"] textarea,
+    [data-baseweb="select"] input {
+        font-size: 16px !important;
+        min-height: 48px !important;
+    }
+
+    /* Tipografia responsive */
+    h1 { font-size: clamp(1.4rem, 6vw, 1.9rem) !important; }
+    h2 { font-size: clamp(1.2rem, 5vw, 1.55rem) !important; }
+    h3 { font-size: clamp(1.05rem, 4.5vw, 1.3rem) !important; }
+
+    /* Formularios compactos */
+    div[data-testid="stForm"] {
+        padding: 0.85rem 0.8rem !important;
+        border-radius: 16px !important;
+    }
+
+    /* Columnas: 2 columnas por defecto en movil (no 1) */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+    }
+
+    /* NO apilamos al 100% - dejamos que Streamlit maneje el ancho */
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        flex-shrink: 1 !important;
+    }
+
+    /* Tablas con scroll horizontal forzado */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"] {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100% !important;
+    }
+
+    /* Expanders mas compactos */
+    [data-testid="stExpander"] details summary {
+        padding: 0.7rem 0.85rem !important;
+        font-size: 0.92rem !important;
+    }
+
+    /* Alerts optimizadas */
+    div[data-testid="stAlert"] [data-testid="stMarkdownContainer"] {
+        padding: 0.7rem 0.85rem !important;
+    }
+
+    div[data-testid="stAlert"] [data-testid="stMarkdownContainer"] p {
+        font-size: 0.9rem !important;
+        line-height: 1.45 !important;
+    }
+
+    /* Sombras reducidas */
+    div[data-testid="stForm"],
+    div[data-testid="stExpander"],
+    div[data-testid="stFileUploader"],
+    div[data-testid="stAlert"] {
+        box-shadow: 0 4px 12px rgba(2, 6, 18, 0.3) !important;
+    }
+
+    /* Metricas compactas */
+    [data-testid="stMetricValue"] {
+        font-size: 1.4rem !important;
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-size: 0.75rem !important;
+    }
+
+    /* Tabs scrollables horizontalmente */
+    [data-testid="stTabs"] [role="tablist"] {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        flex-wrap: nowrap !important;
+        scrollbar-width: thin;
+    }
+}
+
+/* --- MOVIL PEQUE�O (< 480px) --- */
+@media (max-width: 479px) {
+    .block-container {
+        padding: 0.4rem 0.55rem !important;
+    }
+
+    div[data-testid="stForm"] {
+        padding: 0.7rem 0.6rem !important;
+    }
+
+    /* Gap de columnas reducido */
+    .stColumn > div[data-testid="stVerticalBlock"] {
+        gap: 0.4rem !important;
+    }
+}
+
+/* --- ORIENTACION LANDSCAPE EN MOVILES --- */
+@media (max-width: 900px) and (orientation: landscape) {
+    .block-container {
+        padding-top: 0.5rem !important;
+    }
+
+    [data-testid="stSidebar"] {
+        min-width: min(50vw, 300px) !important;
+    }
+}
+
+/* --- TOUCH DEVICES: pointer coarse --- */
+@media (pointer: coarse) {
+    /* Todos los botones con area touch minima de 44x44px */
+    button,
+    [role="button"],
+    a.stButton,
+    .stButton > button,
+    .stDownloadButton > button {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+
+    /* Scrollbars mas anchas en touch */
+    ::-webkit-scrollbar {
+        width: 10px !important;
+        height: 10px !important;
+    }
+
+    /* Selectbox y multiselect con items mas altos */
+    [data-baseweb="popover"] [role="option"] {
+        min-height: 44px !important;
+        padding: 0.6rem 0.85rem !important;
+    }
+}
+
+/* --- MODO REDUCED MOTION --- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    [data-testid="stSpinner"],
+    [data-testid="stSpinner"] *,
+    .stSpinner,
+    .stSpinner *,
+    [data-baseweb="spinner"],
+    [data-baseweb="spinner"] *,
+    .mc-spinner,
+    .mc-auth-spinner,
+    .mc-tr-spinner,
+    .mc-loader-cristal-spinner {
+        animation-duration: 0.85s !important;
+        animation-iteration-count: infinite !important;
+        animation-timing-function: linear !important;
+        animation-play-state: running !important;
+    }
+}
+
+/* --- PREVENIR ZOOM HORIZONTAL --- */
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
+
+.stApp {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+}
+
+/* ========================================================================
+   OVERLAY DE CARGA - Transiciones suaves entre pantallas
+   ======================================================================== */
+
+#mc-loading-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    background: linear-gradient(135deg, #03060f 0%, #060d1f 50%, #03060f 100%) !important;
+    display: none !important;           /* por defecto oculto: evita pantalla azul/negro */
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1.5rem !important;
+    opacity: 0 !important;
+    transition: opacity 0.4s ease-out !important;
+    pointer-events: none !important;
+}
+
+/* Clase para mostrar el overlay cuando JS lo necesite */
+#mc-loading-overlay.mc-overlay-visible {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+}
+
+@keyframes mc-overlay-auto-hide {
+    0%   { opacity: 1; pointer-events: all; }
+    90%  { opacity: 1; pointer-events: all; }
+    100% { opacity: 0; pointer-events: none; visibility: hidden; }
+}
+
+#mc-loading-overlay.mc-overlay-fade-out {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+#mc-loading-overlay.mc-overlay-hidden {
+    display: none !important;
+}
+
+body:has([data-testid="stMainBlockContainer"] *) #mc-loading-overlay,
+body:has([data-testid="stMain"] .block-container *) #mc-loading-overlay {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+body:has([data-testid="stMainBlockContainer"] *) #mc-loading-overlay:not(.mc-overlay-hidden),
+body:has([data-testid="stMain"] .block-container *) #mc-loading-overlay:not(.mc-overlay-hidden) {
+    display: none !important;
+}
+
+/* Logo / título dentro del overlay */
+#mc-loading-overlay .mc-overlay-title {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #5eead4, #60a5fa, #a5b4fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+#mc-loading-overlay .mc-overlay-sub {
+    font-size: 0.75rem;
+    color: #64748b;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+/* Spinner animado */
+#mc-loading-overlay .mc-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(94, 234, 212, 0.15);
+    border-top-color: #14b8a6;
+    border-right-color: #60a5fa;
+    border-radius: 50%;
+    animation: mc-spin 0.8s linear infinite;
+}
+
+/* Dots pulsantes debajo del spinner */
+#mc-loading-overlay .mc-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#mc-loading-overlay .mc-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2dd4bf;
+    animation: mc-pulse-dot 1.2s ease-in-out infinite;
+}
+
+#mc-loading-overlay .mc-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+    background: #60a5fa;
+}
+
+#mc-loading-overlay .mc-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+    background: #a5b4fc;
+}
+
+@keyframes mc-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes mc-pulse-dot {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40%            { opacity: 1;   transform: scale(1.1); }
+}
+
+/* El boton hamburguesa movil lo maneja el JS en core/ui_liviano.py
+   No agregar estilos CSS aqui para no interferir con los inline del JS */
+
+/* ===== ANTI-FATIGA DE SCROLL EN MOVIL ===== */
+@media (max-width: 767px) {
+
+    /* --- 1. TIPOGRAFIA ADAPTIVA: reducir tamaños excesivos --- */
+    h1, [data-testid="stMarkdownContainer"] h1 {
+        font-size: clamp(1.25rem, 5.5vw, 1.6rem) !important;
+        line-height: 1.25 !important;
+        margin-bottom: 0.4rem !important;
+    }
+    h2, [data-testid="stMarkdownContainer"] h2 {
+        font-size: clamp(1.05rem, 4.5vw, 1.3rem) !important;
+        line-height: 1.3 !important;
+        margin-bottom: 0.3rem !important;
+    }
+    h3, [data-testid="stMarkdownContainer"] h3 {
+        font-size: clamp(0.95rem, 4vw, 1.15rem) !important;
+        line-height: 1.35 !important;
+        margin-bottom: 0.25rem !important;
+    }
+    p, li, label,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li {
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+    }
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] p {
+        font-size: 0.78rem !important;
+        line-height: 1.4 !important;
+    }
+
+    /* --- 2. ESPACIADO COMPACTO: eliminar aire muerto --- */
+    .block-container {
+        padding-top: 1.4rem !important;
+        padding-bottom: 0.8rem !important;
+    }
+    [data-testid="stVerticalBlock"] {
+        gap: 0.35rem !important;
+    }
+    [data-testid="element-container"],
+    .element-container {
+        margin-bottom: 0.18rem !important;
+    }
+    [data-testid="stMarkdownContainer"] {
+        margin-bottom: 0.2rem !important;
+    }
+    hr {
+        margin: 0.4rem 0 !important;
+    }
+    /* Expanders: header más compacto */
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] [data-testid="stExpanderToggleIcon"] {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        font-size: 0.9rem !important;
+    }
+    /* Métricas: más compactas */
+    [data-testid="stMetric"] {
+        padding: 0.5rem 0.6rem !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: clamp(1.2rem, 5vw, 1.6rem) !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.75rem !important;
+    }
+
+    /* --- 4. TABLAS: scroll horizontal, sin desborde --- */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"],
+    .stDataFrame,
+    .dataframe-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100% !important;
+        font-size: 0.75rem !important;
+    }
+    [data-testid="stDataFrame"] table,
+    [data-testid="stTable"] table {
+        min-width: max-content !important;
+        font-size: 0.75rem !important;
+    }
+    [data-testid="stDataFrame"] th,
+    [data-testid="stDataFrame"] td {
+        padding: 0.3rem 0.5rem !important;
+        white-space: nowrap !important;
+    }
+
+    /* --- 5. COLUMNAS: colapsar a 1 columna en pantallas muy chicas --- */
+    /* IMPORTANTE: flex-basis auto (NO 280px) para que al combinarse con
+       flex-direction: column (que otro media query aplica), las columnas se
+       adapten al contenido y no generen 280px de altura vacia por columna.
+       Ademas forzamos height auto aunque Streamlit setee style="height:Xpx"
+       inline para igualar columnas (solo tiene sentido en desktop). */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        align-items: flex-start !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+    [data-testid="stHorizontalBlock"] > [data-testid="column"],
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"][style],
+    [data-testid="stHorizontalBlock"] > [data-testid="column"][style] {
+        min-width: 0 !important;
+        width: 100% !important;
+        flex: 0 0 auto !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        align-self: auto !important;
+    }
+    /* Neutralizar height inline en stVerticalBlock internos si Streamlit
+       tambien les setea height para igualar columnas. */
+    [data-testid="stColumn"] > div[data-testid="stVerticalBlock"],
+    [data-testid="column"] > div[data-testid="stVerticalBlock"] {
+        height: auto !important;
+        min-height: 0 !important;
+    }
+}
+
+/* ===== SIDEBAR MOVIL: quitar flex-row de stAppViewContainer para eliminar espacio muerto ===== */
+@media (max-width: 992px) {
+
+    /* stAppViewContainer es flex-row con sidebar + main.
+       Al poner el sidebar en position:fixed, deja un hueco enorme.
+       Solucion: convertir a block, sidebar sale del flujo via fixed. */
+    [data-testid="stAppViewContainer"] {
+        display: block !important;
+        flex-direction: unset !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Sidebar: fuera del flujo normal del documento */
+    section[data-testid="stSidebar"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        z-index: 10012 !important;
+        height: 100dvh !important;
+    }
+
+    /* Main: ocupa todo el ancho disponible */
+    [data-testid="stMain"],
+    [data-testid="stAppViewContainer"] > section:nth-child(2) {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        flex: none !important;
+    }
+}
+
+/* ===== SIDEBAR MOVIL: ocultar cuando esta cerrado (controlado por clase JS) ===== */
+@media (max-width: 767px) {
+    html:not(.mc-sidebar-mobile-open) section[data-testid="stSidebar"],
+    html:not(.mc-sidebar-mobile-open) [data-testid="stSidebar"][aria-expanded="false"] {
+        width: 0px !important;
+        min-width: 0px !important;
+        max-width: 0px !important;
+        transform: translateX(-120%) !important;
+        border-right: none !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    html:not(.mc-sidebar-mobile-open) section[data-testid="stSidebar"] > div,
+    html:not(.mc-sidebar-mobile-open) [data-testid="stSidebar"][aria-expanded="false"] > div {
+        display: none !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] *,
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] *,
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stExpandSidebarButton"] *,
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapseButton"] *,
+    [data-testid="stSidebar"] button[kind="header"],
+    button[kind="headerNoPadding"] {
+        display: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+    }
+
+    [data-testid="stAppViewContainer"] > section:nth-child(2),
+    [data-testid="stMain"] {
+        margin-left: 0px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .main .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+    }
+}
+
+/* =====================================================================
+   LOADER CRISTAL (efecto blur) - del snippet del usuario
+   ===================================================================== */
+.mc-loader-cristal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(14, 17, 23, 0.6);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 9999999;
+}
+.mc-loader-cristal-spinner {
+    width: 45px; height: 45px;
+    border: 3px solid rgba(255, 255, 255, 0.1); border-left-color: #51B171;
+    border-radius: 50%; animation: mc-spin-cristal 1s linear infinite; margin-bottom: 24px;
+}
+@keyframes mc-spin-cristal { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.mc-loader-cristal-texto {
+    color: #FFFFFF; font-family: -apple-system, sans-serif; font-size: 17px;
+    font-weight: 500; animation: mc-pulse-cristal 1.5s ease-in-out infinite;
+}
+@keyframes mc-pulse-cristal { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* =====================================================================
+   FIX SPINNERS: garantizar que la ruedita de cargando siempre gire,
+   independientemente de killers de animaciones previos. Usa keyframes
+   propio (mc-spin-360) para no depender del nombre interno de Streamlit.
+   ===================================================================== */
+@keyframes mc-spin-360 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+html body [data-testid="stSpinner"] svg,
+html body [data-testid="stSpinner"] > div,
+html body [data-testid="stSpinner"] i,
+html body .stSpinner svg,
+html body .stSpinner > div,
+html body [data-baseweb="spinner"],
+html body [data-baseweb="spinner"] svg,
+html body [role="progressbar"] svg,
+html body .mc-spinner,
+html body .mc-auth-spinner,
+html body .mc-tr-spinner,
+html body .mc-loader-cristal-spinner {
+    animation: mc-spin-360 0.85s linear infinite !important;
+    animation-play-state: running !important;
+    transform-origin: center center !important;
+    will-change: transform !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* =====================================================================
+   MOBILE POLISH (<=767px): fixes globales aplicables a TODAS las vistas
+   para evitar espacios muertos, containers gigantes y layouts rotos.
+   ===================================================================== */
+@media (max-width: 767px) {
+    /* Containers con height fijo (ej. st.container(height=520)): limitar
+       a max 55vh para no ocupar toda la pantalla con un scroll interno. */
+    [data-testid="stVerticalBlockBorderWrapper"][style*="height:"],
+    [data-testid="stVerticalBlock"][style*="height:"],
+    div[data-testid="stVerticalBlock"] > div[style*="height:"] {
+        max-height: 55vh !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    /* Forms: padding mas compacto */
+    div[data-testid="stForm"] {
+        padding: 0.75rem 0.85rem 0.6rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Expanders: sin margen vertical grande */
+    [data-testid="stExpander"] {
+        margin-bottom: 0.4rem !important;
+    }
+    [data-testid="stExpander"] details {
+        margin: 0 !important;
+    }
+
+    /* Tabs: bordes compactos, sin margen vertical excesivo */
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 0.25rem !important;
+        padding: 0 !important;
+    }
+    [data-testid="stTabs"] [data-baseweb="tab"] {
+        padding: 0.45rem 0.7rem !important;
+        min-height: 38px !important;
+        font-size: 0.85rem !important;
+    }
+    [data-testid="stTabs"] [data-baseweb="tab-panel"] {
+        padding-top: 0.5rem !important;
+    }
+
+    /* Selectbox: label mas pegado al input */
+    [data-testid="stSelectbox"] label,
+    [data-testid="stTextInput"] label,
+    [data-testid="stNumberInput"] label,
+    [data-testid="stTextArea"] label,
+    [data-testid="stDateInput"] label {
+        margin-bottom: 0.15rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Alertas (st.info / warning / success / error): padding compacto */
+    div[data-testid="stAlert"] {
+        padding: 0.55rem 0.75rem !important;
+        margin: 0.3rem 0 !important;
+    }
+    div[data-testid="stAlert"] p {
+        margin: 0 !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* Caption: sin margen top */
+    [data-testid="stCaptionContainer"] {
+        margin-top: 0 !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* Metrics: padding compacto */
+    [data-testid="stMetric"] {
+        padding: 0.5rem 0.65rem !important;
+        margin: 0.15rem 0 !important;
+    }
+
+    /* Cards custom (mc-card, mc-callout, etc.): menos padding */
+    .mc-card, .mc-brand-card, .mc-chip-row {
+        padding: 0.7rem 0.85rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+    .mc-callout {
+        padding: 0.4rem 0.8rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+    .mc-dynamic-island {
+        padding: 0.35rem 0.75rem 0.35rem 0.45rem !important;
+        margin: 0.25rem 0 0.4rem !important;
+    }
+    .mc-dynamic-island-dot {
+        width: 7px !important;
+        height: 7px !important;
+    }
+    .mc-dynamic-island-text strong {
+        font-size: 0.76rem !important;
+    }
+    .mc-dynamic-island-meta {
+        font-size: 0.68rem !important;
+    }
+    .mc-grid-3 {
+        gap: 0.5rem !important;
+        grid-template-columns: 1fr !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* DataFrames: altura limitada */
+    [data-testid="stDataFrame"] {
+        max-height: 50vh !important;
+    }
+
+    /* Subheaders y h2/h3 con poco margen */
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3,
+    [data-testid="stMarkdownContainer"] h4 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* Download button: mas chico en mobile */
+    [data-testid="stDownloadButton"] button {
+        padding: 0.55rem 0.9rem !important;
+        font-size: 0.85rem !important;
+        min-height: 40px !important;
+    }
+
+    /* Progress bar: mas chico */
+    [data-testid="stProgress"] {
+        margin: 0.3rem 0 !important;
+    }
+
+    /* File uploader: mas compacto */
+    [data-testid="stFileUploader"] {
+        padding: 0.5rem !important;
+    }
+    [data-testid="stFileUploader"] section {
+        padding: 0.75rem !important;
+    }
+}
+
+/* Ocultar elementos en mobile (para textos explicativos largos que no caben) */
+.ocultar-movil {
+    display: block;
+}
+@media (max-width: 767px) {
+    .ocultar-movil {
+        display: none !important;
+    }
+    /* Ocultar header de Streamlit en mobile (ganar espacio vertical) */
+    header[data-testid="stHeader"] {
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}
+
+/* TABLET (768-1024px): reducir containers fijos muy altos tambien */
+@media (min-width: 768px) and (max-width: 1024px) {
+    [data-testid="stVerticalBlockBorderWrapper"][style*="height:"] {
+        max-height: 60vh !important;
+    }
+    div[data-testid="stForm"] {
+        padding: 1rem 1.1rem 0.85rem !important;
+    }
+    [data-testid="stExpander"] {
+        margin-bottom: 0.6rem !important;
+    }
+    /* Mismo fix de heights inline que mobile pero con max-height mas alto */
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        height: auto !important;
+        min-height: 0 !important;
+        align-self: auto !important;
+    }
+}
+
+/* =====================================================================
+   MOBILE NUCLEAR RESET: reset absoluto de heights en stHorizontalBlock.
+   Streamlit 1.56 setea height inline en stColumn para igualar alturas
+   entre columnas (util en desktop, catastrofico en mobile al apilar).
+   Forzamos height:auto en TODO el arbol descendiente con * selector.
+   ===================================================================== */
+@media (max-width: 767px) {
+    /* Loader overlay simplificado */
+    .mc-loader-cristal-overlay {
+        background: rgba(14, 17, 23, 0.8) !important;
+    }
+
+    /* Ocultar header de Streamlit en mobile para ganar espacio */
+    header[data-testid="stHeader"],
+    [data-testid="stHeader"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Ocultar elementos con clase ocultar-movil */
+    .ocultar-movil {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* === RESET MÓVIL NUCLEAR: Compactar TODA la interfaz === */
+
+    /* 1. Reducir el padding general de la pantalla */
+    html body .block-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    /* 2. Aplastar TODOS los gaps de Streamlit */
+    [data-testid="stVerticalBlock"] {
+        gap: 0.15rem !important;
+    }
+    [data-testid="stHorizontalBlock"] {
+        gap: 0.15rem !important;
+    }
+
+    /* 3. Reducir el margen de CADA elemento */
+    [data-testid="stElementContainer"] {
+        margin-bottom: 0.1rem !important;
+        margin-top: 0 !important;
+    }
+
+    /* 4. Pegar la etiqueta al input */
+    .stNumberInput label,
+    .stTextInput label,
+    .stSelectbox label,
+    .stTextArea label,
+    [data-testid="stNumberInput"] label,
+    [data-testid="stTextInput"] label,
+    [data-testid="stSelectbox"] label,
+    [data-testid="stTextArea"] label {
+        padding-bottom: 0 !important;
+        margin-bottom: -2px !important;
+        margin-top: 0 !important;
+        min-height: auto !important;
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* 5. Compactar inputs */
+    input[type="number"],
+    input[type="text"],
+    .stNumberInput input,
+    .stTextInput input,
+    .stTextArea textarea {
+        min-height: 36px !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+    }
+
+    /* 6. Reducir espacios en formularios */
+    [data-testid="stForm"] {
+        padding: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* 7. Columnas apiladas sin altura forzada */
+    html body [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+        height: auto !important;
+        min-height: 0 !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* 8. Separadores hr con menos margen */
+    hr {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* 9. Headers mas compactos */
+    h1, h2, h3 {
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* 10. Expanders compactos */
+    [data-testid="stExpander"] {
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* 11. Containers con altura fija: limitar en mobile */
+    [data-testid="stVerticalBlockBorderWrapper"][style*="height"] {
+        max-height: 50vh !important;
+    }
+
+    /* 12. Botones submit mas compactos */
+    button[type="submit"] {
+        min-height: 40px !important;
+        margin-top: 0.5rem !important;
+    }
+}
+
+/* =====================================================================
+   SIDEBAR FIJO FINAL (desktop/tablet)
+   Override final para unificar el layout principal sin afectar mobile.
+   - >= 768px: sidebar fijo, siempre montado/visible
+   - < 768px: sigue la lógica actual del drawer/toggle móvil
+   ===================================================================== */
+:root {
+    --mc-fixed-sidebar-width-tablet: 300px;
+    --mc-fixed-sidebar-width-desktop: 340px;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    html {
+        --mc-fixed-sidebar-width: var(--mc-fixed-sidebar-width-tablet);
+    }
+}
+
+@media (min-width: 1025px) {
+    html {
+        --mc-fixed-sidebar-width: var(--mc-fixed-sidebar-width-desktop);
+    }
+}
+
+/* Sidebar fijo desktop: DESHABILITADO — causaba pantalla vacía en PC.
+   Streamlit maneja el sidebar nativamente en desktop sin problemas.
+   El layout fijo solo era necesario para móviles con drawer custom. */
+/*
+@media (min-width: 768px) {
+    [data-testid="stAppViewContainer"] {
+        display: flex !important;
+        min-height: 100vh !important;
+        overflow-x: hidden !important;
+    }
+
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"][aria-expanded="false"],
+    section[data-testid="stSidebar"][aria-expanded="true"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: var(--mc-fixed-sidebar-width) !important;
+        min-width: var(--mc-fixed-sidebar-width) !important;
+        max-width: var(--mc-fixed-sidebar-width) !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        overflow: hidden !important;
+        z-index: 1000000 !important;
+        background: var(--bg-sidebar, #090e1a) !important;
+        border-right: 1px solid rgba(148, 163, 184, 0.12) !important;
+        box-shadow: 12px 0 32px rgba(2, 6, 18, 0.28) !important;
+        resize: none !important;
+    }
+
+    section[data-testid="stSidebar"] > div[data-testid="stSidebarContent"] {
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    section[data-testid="stSidebar"]::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 12px !important;
+        height: 100% !important;
+        background: transparent !important;
+        pointer-events: auto !important;
+        cursor: default !important;
+        z-index: 3 !important;
+    }
+
+    section[data-testid="stSidebar"] > div:not([data-testid="stSidebarContent"]) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    [data-testid="stAppViewContainer"] > [role="separator"],
+    section[data-testid="stSidebar"] [role="separator"],
+    [data-mc-desktop-sidebar-artifact="true"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] *,
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] *,
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stExpandSidebarButton"] *,
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapseButton"] *,
+    [data-testid="stSidebar"] button[kind="header"],
+    button[kind="headerNoPadding"],
+    #mc-mobile-sidebar-toggle-btn,
+    #mc-mobile-sidebar-toggle-btn-v2 {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+
+    [data-testid="stMain"],
+    section[data-testid="stMain"],
+    [data-testid="stAppViewContainer"] > section[data-testid="stMain"] {
+        margin-left: var(--mc-fixed-sidebar-width) !important;
+        width: calc(100% - var(--mc-fixed-sidebar-width)) !important;
+        max-width: calc(100% - var(--mc-fixed-sidebar-width)) !important;
+        min-width: 0 !important;
+        padding-left: 0 !important;
+        flex: none !important;
+    }
+
+    [data-testid="stMain"] > div,
+    section[data-testid="stMain"] > div,
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stMain"] .block-container {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .block-container {
+        max-width: 1500px !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+*/
+
+/* Desktop: mantener padding de block-container sin forzar sidebar fijo */
+@media (min-width: 768px) {
+    .block-container {
+        max-width: 1500px !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .block-container {
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+    }
+}
+
+/* =====================================================================
+   COMPONENTES UI MÉDICOS - MediCare Design System
+   Tooltips, badges clínicos, timeline y micro-interacciones
+   ===================================================================== */
+
+/* ---------- TOOLTIPS MÉDICOS ---------- */
+.mc-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.mc-tooltip .mc-tooltip-text {
+    visibility: hidden;
+    width: max-content;
+    max-width: 280px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #f8fafc;
+    text-align: left;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    position: absolute;
+    z-index: 10000;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    box-shadow: 0 10px 40px rgba(2, 6, 23, 0.4);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+
+}
+
+.mc-tooltip .mc-tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+}
+
+.mc-tooltip:hover .mc-tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+/* Tooltip posiciones alternativas */
+.mc-tooltip-right .mc-tooltip-text {
+    bottom: 50%;
+    left: 125%;
+    transform: translateY(50%);
+}
+
+.mc-tooltip-right .mc-tooltip-text::after {
+    top: 50%;
+    left: -5px;
+    margin-left: 0;
+    margin-top: -5px;
+    border-color: transparent #1e293b transparent transparent;
+}
+
+/* ---------- BADGES CLÍNICOS ---------- */
+.mc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.mc-badge-critical {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.mc-badge-warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
+.mc-badge-success {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.25);
+}
+
+.mc-badge-info {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+.mc-badge-neutral {
+    background: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+/* Badges médicos específicos */
+.mc-badge-alergia {
+    background: rgba(236, 72, 153, 0.12);
+    color: #ec4899;
+    border-color: rgba(236, 72, 153, 0.25);
+}
+
+.mc-badge-urgencia {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+    color: #f97316;
+    border-color: rgba(245, 158, 11, 0.3);
+    animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ---------- TIMELINE CLÍNICO ---------- */
+.mc-timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.mc-timeline::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(
+        180deg,
+        #3b82f6 0%,
+        #22c55e 50%,
+        #94a3b8 100%
+    );
+    border-radius: 2px;
+}
+
+.mc-timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+    padding-left: 1.25rem;
+}
+
+.mc-timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -1.625rem;
+    top: 0.25rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid #0f172a;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.mc-timeline-item.critico::before {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px #ef4444;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.mc-timeline-item.mejora::before {
+    background: #22c55e;
+    box-shadow: 0 0 0 2px #22c55e;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 2px #ef4444, 0 0 0 4px rgba(239, 68, 68, 0.3); }
+    50% { box-shadow: 0 0 0 2px #ef4444, 0 0 0 8px rgba(239, 68, 68, 0.1); }
+}
+
+.mc-timeline-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.mc-timeline-date {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.mc-timeline-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin: 0;
+}
+
+.mc-timeline-content {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    background: rgba(30, 41, 59, 0.4);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid #3b82f6;
+}
+
+/* ---------- CARDS MÉDICAS MEJORADAS ---------- */
+.mc-medical-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mc-medical-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #3b82f6, #22c55e);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mc-medical-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    border-color: #475569;
+}
+
+.mc-medical-card:hover::before {
+    opacity: 1;
+}
+
+.mc-medical-card.critica::before {
+    background: linear-gradient(135deg, #ef4444, #f59e0b);
+    opacity: 1;
+}
+
+.mc-medical-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.mc-medical-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ---------- ANIMACIONES DE ENTRADA ---------- */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.mc-animate-fade-up {
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.mc-animate-fade-left {
+    animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+.mc-animate-scale {
+    animation: scaleIn 0.3s ease-out forwards;
+}
+
+.mc-animate-slide-right {
+    animation: slideInRight 0.4s ease-out forwards;
+}
+
+/* Stagger delays para listas */
+.mc-stagger-1 { animation-delay: 0.05s; }
+.mc-stagger-2 { animation-delay: 0.1s; }
+.mc-stagger-3 { animation-delay: 0.15s; }
+.mc-stagger-4 { animation-delay: 0.2s; }
+.mc-stagger-5 { animation-delay: 0.25s; }
+
+/* ---------- MICRO-INTERACCIONES ---------- */
+.mc-btn-hover {
+    transition: all 0.2s ease;
+}
+
+.mc-btn-hover:hover {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.mc-btn-hover:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
+.mc-card-hover {
+    transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.mc-card-hover:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- INDICADORES DE ESTADO ---------- */
+.mc-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+}
+
+.mc-status-dot.active {
+    background: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+}
+
+.mc-status-dot.warning {
+    background: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+.mc-status-dot.critical {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ---------- SCROLLBAR PERSONALIZADA ---------- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.5);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.5) rgba(15, 23, 42, 0.5);
+}
+
+/* ---------- UTILIDADES RÁPIDAS ---------- */
+.mc-text-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #22c55e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.mc-glass {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+
+.mc-border-gradient {
+    position: relative;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 12px;
+}
+
+.mc-border-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(135deg, #3b82f6, #22c55e, #3b82f6);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+/* ---------- RESPONSIVE UTILITIES ---------- */
+@media (max-width: 767px) {
+    .mc-timeline {
+        padding-left: 1rem;
+    }
+    
+    .mc-timeline-item {
+        padding-left: 0.75rem;
+        padding-bottom: 1rem;
+    }
+    
+    .mc-medical-card {
+        padding: 1rem;
+    }
+    
+    .mc-tooltip .mc-tooltip-text {
+        max-width: 200px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Reducir motion para accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =====================================================================
+   ESTILOS DE IMPRESIÓN - Documentos Médicos Profesionales
+   Oculta UI de Streamlit, muestra solo contenido relevante
+   ===================================================================== */
+
+@media print {
+    /* Ocultar elementos de UI de Streamlit */
+    header[data-testid="stHeader"],
+    [data-testid="stSidebar"],
+    [data-testid="stSidebarCollapsedControl"],
+    .stButton > button,
+    [data-testid="stTabs"] button,
+    .stSelectbox,
+    .stTextInput,
+    .stTextArea,
+    [data-testid="stCheckbox"],
+    [data-testid="stRadio"],
+    [data-testid="stFileUploaderDropzone"],
+    [data-testid="stExpanderToggleIcon"],
+    footer,
+    iframe,
+    .mc-toast-container,
+    .mc-sidebar-search,
+    #MainMenu,
+    .stDeployButton,
+    .stSpinner,
+    [data-testid="stNotificationContent"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Resetear layout para impresión */
+    [data-testid="stAppViewContainer"] {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    [data-testid="stMain"] {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    
+    .block-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Estilos base para impresión */
+    body {
+        background: white !important;
+        color: #1a1a1a !important;
+        font-family: Georgia, "Times New Roman", serif !important;
+        font-size: 11pt !important;
+        line-height: 1.6 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Header de documento médico */
+    .mc-print-header {
+        text-align: center;
+        border-bottom: 2px solid #1a365d;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .mc-print-logo {
+        max-height: 60px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mc-print-clinic-name {
+        font-size: 18pt;
+        font-weight: bold;
+        color: #1a365d;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .mc-print-clinic-info {
+        font-size: 9pt;
+        color: #4a5568;
+        margin-top: 0.25rem;
+    }
+    
+    /* Título del documento */
+    .mc-print-title {
+        font-size: 16pt;
+        font-weight: bold;
+        text-align: center;
+        margin: 1.5rem 0;
+        color: #1a1a1a;
+        text-transform: uppercase;
+        border-bottom: 1px solid #cbd5e0;
+        padding-bottom: 0.5rem;
+    }
+    
+    /* Información del paciente */
+    .mc-print-patient-info {
+        background: #f7fafc !important;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .mc-print-patient-info h3 {
+        font-size: 12pt;
+        color: #2d3748;
+        margin: 0 0 0.75rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.25rem;
+    }
+    
+    .mc-print-field {
+        display: inline-block;
+        margin-right: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mc-print-field-label {
+        font-weight: bold;
+        color: #4a5568;
+        font-size: 9pt;
+    }
+    
+    .mc-print-field-value {
+        color: #1a1a1a;
+        font-size: 10pt;
+    }
+    
+    /* Secciones del documento */
+    .mc-print-section {
+        margin-bottom: 1.5rem;
+        page-break-inside: avoid;
+    }
+    
+    .mc-print-section-title {
+        font-size: 12pt;
+        font-weight: bold;
+        color: #2d3748;
+        border-bottom: 1px solid #cbd5e0;
+        padding-bottom: 0.25rem;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+    }
+    
+    /* Contenido de evoluciones */
+    .mc-print-evolution {
+        margin-bottom: 1rem;
+        padding-left: 1rem;
+        border-left: 3px solid #cbd5e0;
+    }
+    
+    .mc-print-evolution-date {
+        font-weight: bold;
+        color: #4a5568;
+        font-size: 10pt;
+        margin-bottom: 0.25rem;
+    }
+    
+    .mc-print-evolution-author {
+        font-style: italic;
+        color: #718096;
+        font-size: 9pt;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mc-print-evolution-text {
+        text-align: justify;
+        color: #1a1a1a;
+    }
+    
+    /* Tablas para impresión */
+    .mc-print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 10pt;
+    }
+    
+    .mc-print-table th {
+        background: #edf2f7 !important;
+        border: 1px solid #cbd5e0;
+        padding: 0.5rem;
+        text-align: left;
+        font-weight: bold;
+        color: #2d3748;
+    }
+    
+    .mc-print-table td {
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem;
+        color: #1a1a1a;
+    }
+    
+    .mc-print-table tr:nth-child(even) {
+        background: #f7fafc !important;
+    }
+    
+    /* Receta médica específica */
+    .mc-print-receta {
+        border: 2px solid #1a365d;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .mc-print-receta-logo {
+        float: left;
+        margin-right: 1rem;
+        max-height: 50px;
+    }
+    
+    .mc-print-rp {
+        font-size: 14pt;
+        font-weight: bold;
+        color: #1a365d;
+        margin: 1rem 0 0.5rem 0;
+    }
+    
+    /* Firma y sello */
+    .mc-print-signature-section {
+        margin-top: 3rem;
+        page-break-inside: avoid;
+    }
+    
+    .mc-print-signature-line {
+        border-top: 1px solid #1a1a1a;
+        width: 250px;
+        margin-top: 2rem;
+        padding-top: 0.5rem;
+    }
+    
+    .mc-print-signature-name {
+        font-weight: bold;
+        font-size: 10pt;
+    }
+    
+    .mc-print-signature-title {
+        font-size: 9pt;
+        color: #4a5568;
+    }
+    
+    .mc-print-signature-matricula {
+        font-size: 8pt;
+        color: #718096;
+    }
+    
+    /* Footer de página */
+    .mc-print-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 0.5rem;
+        font-size: 8pt;
+        color: #718096;
+        text-align: center;
+    }
+    
+    /* Saltos de página */
+    .mc-print-page-break {
+        page-break-before: always;
+    }
+    
+    .mc-print-avoid-break {
+        page-break-inside: avoid;
+    }
+    
+    /* Códigos y diagnósticos */
+    .mc-print-cie10 {
+        font-family: "Courier New", monospace;
+        background: #edf2f7 !important;
+        padding: 0.125rem 0.375rem;
+        border-radius: 3px;
+        font-size: 9pt;
+    }
+    
+    /* Badges para impresión (sin color) */
+    .mc-badge,
+    .mc-badge-critical,
+    .mc-badge-warning,
+    .mc-badge-success,
+    .mc-badge-info {
+        border: 1px solid #718096 !important;
+        padding: 0.125rem 0.375rem !important;
+        font-size: 8pt !important;
+        background: none !important;
+        color: #1a1a1a !important;
+    }
+    
+    /* Links */
+    a {
+        color: #1a1a1a !important;
+        text-decoration: none !important;
+    /* Mostrar URLs de links importantes */
+    a[href]:after {
+        content: " (" attr(href) ")";
+        font-size: 8pt;
+        color: #718096;
+    }
+    
+    /* Ocultar elementos con clase no-print */
+    .no-print,
+    .mc-no-print {
+        display: none !important;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   Bottom Sheet iOS — Panel flotante inferior
+   ═══════════════════════════════════════════ */
+.mc-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10020;
+    background:
+        linear-gradient(180deg, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.90) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px 24px 0 0;
+    padding: 1rem 1.1rem 1.4rem;
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.2s ease;
+    transform: translateY(0);
+}
+
+.mc-bottom-sheet.mc-bottom-sheet--hidden {
+    transform: translateY(110%);
+}
+
+/* Handle indicador iOS */
+.mc-bottom-sheet::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.25);
+    margin: 0 auto 0.75rem;
+}
+
+/* ═══════════════════════════════════════════
+   OVERRIDES COMPACTOS GLOBALES — iOS Native
+   ═══════════════════════════════════════════ */
+
+/* Forzar padding compacto en block-container */
+.block-container {
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.4rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+/* Formularios ultra-compactos */
+div[data-testid="stForm"] {
+    padding: 0.4rem 0.6rem 0.35rem !important;
+    max-width: 380px !important;
+}
+
+div[data-testid="stForm"] > div {
+    gap: 0.2rem !important;
+}
+
+/* Inputs y selects compactos */
+[data-baseweb="input"] > div,
+[data-baseweb="select"] > div {
+    min-height: 36px !important;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    min-height: 36px !important;
+    padding: 0.3rem 0.6rem !important;
+}
+
+/* VerticalBlock gaps ultra-reducidos */
+[data-testid="stVerticalBlock"] {
+    gap: 0.25rem !important;
+}
+
+[data-testid="stVerticalBlock"] > div {
+    margin-bottom: 0.15rem !important;
+}
+
+/* Element containers sin aire */
+[data-testid="element-container"],
+.element-container {
+    margin-bottom: 0.15rem !important;
+    padding: 0.1rem 0 !important;
+}
+
+/* Shell de módulos compacto */
+.mc-module-shell {
+    padding: 0.5rem 0.6rem 0.4rem !important;
+    margin-bottom: 0.4rem !important;
+}
+
+.mc-module-shell-head {
+    padding: 0.35rem 0.5rem !important;
+    margin-bottom: 0.2rem !important;
+}
+
+/* Hero compacto */
+.mc-hero {
+    padding: 12px 14px 10px !important;
+    margin-bottom: 0.4rem !important;
+}
+
+/* Alertas y callouts compactos */
+[data-testid="stAlert"] > div {
+    padding: 0.5rem 0.7rem !important;
+}
+
+/* Sidebar padding reducido */
+[data-testid="stSidebar"] .block-container {
+    padding: 0.3rem 0.4rem !important;
+}
+
+/* Tabs compactos */
+[data-testid="stTabs"] [role="tablist"] {
+    gap: 0.15rem !important;
+    margin-bottom: 0.3rem !important;
+}
+
+[data-testid="stTabs"] [role="tab"] {
+    padding: 0.3rem 0.6rem !important;
+    min-height: 32px !important;
+}
+
+/* Columnas sin padding excesivo */
+[data-testid="column"] {
+    padding: 0 0.3rem !important;
+}
+
+/* Inputs y selects: sólidos, limpios */
+[data-baseweb="input"],
+[data-baseweb="select"] {
+    background: #0f172a !important;
+    border-radius: 8px !important;
+    border: 1px solid #334155 !important;
+}
+
+/* Tabs: hover limpio sin transform */
+[data-testid="stTabs"] [role="tab"] {
+    transition: background-color 0.2s ease, border-color 0.2s ease !important;
+    border-radius: 8px !important;
+}
+
+[data-testid="stTabs"] [role="tab"]:hover {
+    background: #1e293b !important;
+}

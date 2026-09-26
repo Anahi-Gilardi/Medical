@@ -1,0 +1,13 @@
+"""HTML/CSS de la landing pre-login."""
+
+from __future__ import annotations
+
+from core._landing_styles import _PART_1, _PART_2, _PART_3, _PART_4
+from core._landing_markup import _PART_5, _PART_6, _PART_7
+
+
+def obtener_html_landing_publicidad(logo_html: str) -> str:
+    """Retorna el bloque completo <style> + markup para st.markdown(..., unsafe_allow_html=True)."""
+    return (
+        _PART_1 + _PART_2 + _PART_3 + _PART_4 + _PART_5 + _PART_6 + _PART_7
+    ).replace("__LOGO__", logo_html)

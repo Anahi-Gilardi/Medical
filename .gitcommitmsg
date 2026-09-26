@@ -1,0 +1,17 @@
+﻿feat(ui): grilla HTML/CSS responsive para modulos - reemplaza st.columns
+
+- Nuevo render_modulos_grid() en core/view_dispatch.py:
+  * Inyecta CSS .mod-grid con display:grid y repeat(auto-fill, minmax(150px,150px))
+  * PC: capsulas de 58px, icono + texto horizontal, white-space:nowrap
+  * Movil (@media <=640px): 3 columnas, icono arriba + texto abajo, altura 66px
+  * Extrae emoji automaticamente del label (ord > 127) como .mod-icon
+  * Genera links <a href="?modulo=..."> con clase .active si es modulo actual
+  * Sin st.columns, sin st.button, sin problemas de ancho fraccional de Streamlit
+
+- Reemplaza navegacion nativa st.columns(stButton) en render_module_nav()
+  por render_modulos_grid(pill_options, default_sel, view_nav_labels)
+
+- Agrega handler de query param ?modulo= en main.py post-login:
+  * Lee st.query_params["modulo"], valida contra menu_set
+  * Actualiza modulo_actual + modulo_anterior, borra param, st.rerun()
+  * Compatible con API antigua y moderna de query_params

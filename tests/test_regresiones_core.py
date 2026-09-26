@@ -1,0 +1,470 @@
+from __future__ import annotations
+
+from datetime import datetime
+from io import BytesIO
+
+from core import clinical_exports
+from core.module_catalog import ALERTAS_APP_PACIENTE_MODULO, categorias_navegacion_sidebar
+from core.utils import (
+    ARG_TZ,
+    clave_menu_usuario,
+    construir_registro_auditoria_legal,
+    decodificar_base64_seguro,
+    filtrar_registros_empresa,
+    limite_archivo_mb,
+    modo_celular_viejo_activo,
+    normalizar_usuario_sistema,
+    obtener_modulos_permitidos,
+    obtener_pacientes_visibles,
+    logins_clave_default_superadmin,
+    preparar_imagen_clinica_bytes,
+    rol_ve_datos_todas_las_clinicas,
+    estado_pacientes_sql,
+    limpiar_estado_ui_paciente,
+    registrar_estado_pacientes_sql,
+    set_paciente_actual,
+    validar_archivo_bytes,
+    valor_por_modo_liviano,
+)
+from core.password_crypto import hash_password as generar_hash_password, verificar_password as validar_password_guardado
+from PIL import Image
+
+
+def test_password_hash_y_compatibilidad_legacy():
+    password = "TestPasswordSecure123!"  # Solo para tests, no usar en producción
+    hashed = generar_hash_password(password)
+
+    assert hashed != password
+    assert validar_password_guardado(hashed, password) is True
+    assert validar_password_guardado(password, password) is True
+    assert validar_password_guardado(hashed, "OtraClave999") is False
+
+
+def test_login_emergencia_incluye_enzogirardi():
+    logins = logins_clave_default_superadmin()
+
+    assert "admin" in logins
+    assert "enzogirardi" in logins
+
+
+def test_emergency_password_lee_variable_entorno(monkeypatch):
+    import core.utils as utils
+
+    monkeypatch.setenv("SUPERADMIN_EMERGENCY_PASSWORD", "clave-local")
+    monkeypatch.setattr(utils.st, "secrets", {}, raising=False)
+
+    assert utils.obtener_emergency_password() == "clave-local"
+
+
+def test_normalizar_usuario_recupera_rol_clinico_legacy():
+    usuario = normalizar_usuario_sistema(
+        {"rol": "Administrativo", "perfil_profesional": "Medico"}
+    )
+
+    assert usuario["rol"] == "Medico"
+    assert usuario["perfil_profesional"] == "Medico"
+
+
+def test_categorias_navegacion_respeta_flag_alertas():
+    con = categorias_navegacion_sidebar(alertas_app_visible=True)
+    sin = categorias_navegacion_sidebar(alertas_app_visible=False)
+    assert ALERTAS_APP_PACIENTE_MODULO in con["Emergencias"]
+    assert ALERTAS_APP_PACIENTE_MODULO not in sin["Emergencias"]
+
+
+def test_menu_operativo_perfil_asistencial_no_hereda_modulos_gestion():
+    menu = obtener_modulos_permitidos(
+        "Operativo",
+        ["Visitas y Agenda", "Recetas", "Caja", "Dashboard"],
+        {"rol": "Operativo", "perfil_profesional": "Operativo"},
+    )
+
+    assert "Visitas y Agenda" in menu
+    assert "Recetas" in menu
+    assert "Caja" not in menu
+    assert "Dashboard" not in menu
+
+
+def test_rol_enfermeria_con_tilde_usa_menu_clinico_y_balance():
+    """Evita que «Enfermería» (tilde) caiga fuera de operativo_clinico y pierda módulos."""
+    assert clave_menu_usuario("Enfermería", {"rol": "Enfermería", "perfil_profesional": "Enfermería"}) == "operativo_clinico"
+    u = normalizar_usuario_sistema({"rol": "Enfermería", "perfil_profesional": "Enfermería"})
+    assert u["rol"] == "Enfermeria"
+    mods = ["Recetas", "Balance", "Emergencias y Ambulancia", "Dashboard"]
+    menu = obtener_modulos_permitidos(u["rol"], mods, u)
+    assert "Balance" in menu
+    assert "Dashboard" not in menu
+
+
+def test_menu_asistencial_incluye_balance_hidrico():
+    """Enfermería / operativo clínico necesitan balance hídrico (no solo perfil de gestión)."""
+    mods = ["Visitas y Agenda", "Balance", "Recetas", "Caja", "Dashboard"]
+    enf = obtener_modulos_permitidos(
+        "Enfermeria",
+        mods,
+        {"rol": "Enfermeria", "perfil_profesional": "Enfermeria"},
+    )
+    assert "Balance" in enf
+    assert "Caja" not in enf
+
+    op_clin = obtener_modulos_permitidos(
+        "Operativo",
+        mods,
+        {"rol": "Operativo", "perfil_profesional": "Enfermeria"},
+    )
+    assert "Balance" in op_clin
+
+
+def test_multiclinica_solo_para_roles_globales():
+    assert rol_ve_datos_todas_las_clinicas("SuperAdmin") is True
+    assert rol_ve_datos_todas_las_clinicas("Operativo") is False
+    assert rol_ve_datos_todas_las_clinicas("Coordinador") is False
+
+
+def test_paciente_visible_misma_clinica_con_o_sin_tilde():
+    """Evita que el legajo no aparezca en Admisión / sidebar si empresa y sesión difieren solo en tildes."""
+    ss = {
+        "pacientes_db": ["Ana Gomez - 111"],
+        "detalles_pacientes_db": {
+            "Ana Gomez - 111": {"dni": "111", "empresa": "Clínica Este", "estado": "Activo"},
+        },
+    }
+    vis = obtener_pacientes_visibles(ss, "Clinica Este", "Medico", busqueda="")
+    assert len(vis) == 1
+    assert vis[0][0] == "Ana Gomez - 111"
+
+
+def test_busqueda_pacientes_ignora_tildes_en_nombre_y_detalles():
+    paciente = "Jos\u00e9 \u00c1lvarez - 333"
+    ss = {
+        "pacientes_db": [paciente, "Maria Lopez - 444"],
+        "detalles_pacientes_db": {
+            paciente: {
+                "dni": "333",
+                "obra_social": "Uni\u00f3n Personal",
+                "empresa": "Clinica Norte",
+                "estado": "Activo",
+            },
+            "Maria Lopez - 444": {
+                "dni": "444",
+                "obra_social": "OSDE",
+                "empresa": "Clinica Norte",
+                "estado": "Activo",
+            },
+        },
+    }
+
+    por_nombre = obtener_pacientes_visibles(ss, "Clinica Norte", "Medico", busqueda="Jose Alvarez")
+    por_obra_social = obtener_pacientes_visibles(ss, "Clinica Norte", "Medico", busqueda="Union")
+
+    assert [x[0] for x in por_nombre] == [paciente]
+    assert [x[0] for x in por_obra_social] == [paciente]
+
+
+def test_set_paciente_actual_registra_cambio_y_anterior():
+    ss = {
+        "paciente_actual": "Ana Gomez - 111",
+        "hora_vits": "08:30",
+        "vitales_db": [{"paciente": "Ana Gomez - 111"}],
+    }
+
+    cambio = set_paciente_actual(ss, "Luis Perez - 222")
+
+    assert cambio is True
+    assert ss["paciente_actual"] == "Luis Perez - 222"
+    assert ss["paciente_anterior"] == "Ana Gomez - 111"
+    assert ss["_mc_paciente_cambio"]["anterior"] == "Ana Gomez - 111"
+    assert ss["_mc_paciente_cambio"]["actual"] == "Luis Perez - 222"
+    assert ss["_mc_paciente_cambio"]["ui_limpiada"] == ["hora_vits"]
+    assert "hora_vits" not in ss
+    assert ss["vitales_db"] == [{"paciente": "Ana Gomez - 111"}]
+
+
+def test_set_paciente_actual_no_ensucia_estado_si_no_cambia():
+    ss = {
+        "paciente_actual": "Ana Gomez - 111",
+        "paciente_anterior": "Luis Perez - 222",
+    }
+
+    cambio = set_paciente_actual(ss, "Ana Gomez - 111")
+
+    assert cambio is False
+    assert ss["paciente_actual"] == "Ana Gomez - 111"
+    assert ss["paciente_anterior"] == "Luis Perez - 222"
+    assert "_mc_paciente_cambio" not in ss
+
+
+def test_limpiar_estado_ui_paciente_solo_borra_claves_efimeras():
+    ss = {
+        "hora_vits": "09:10",
+        "conf_borrar_estudio": True,
+        "matriz_mar_editor_Ana_2026-05-13": {"rows": []},
+        "pacientes_db": ["Ana Gomez - 111"],
+        "evoluciones_db": [{"paciente": "Ana Gomez - 111"}],
+        "mc_buscar_paciente": "Ana",
+    }
+
+    removidas = limpiar_estado_ui_paciente(ss)
+
+    assert removidas == [
+        "hora_vits",
+        "conf_borrar_estudio",
+        "matriz_mar_editor_Ana_2026-05-13",
+    ]
+    assert ss["pacientes_db"] == ["Ana Gomez - 111"]
+    assert ss["evoluciones_db"] == [{"paciente": "Ana Gomez - 111"}]
+    assert ss["mc_buscar_paciente"] == "Ana"
+
+
+def test_estado_pacientes_sql_expone_diagnostico_breve():
+    ss = {}
+    err = RuntimeError("x" * 300)
+
+    status = registrar_estado_pacientes_sql(ss, ok=False, empresa="Clinica Demo", error=err)
+
+    assert estado_pacientes_sql(ss) == status
+    assert status["ok"] is False
+    assert status["fallback"] == "local"
+    assert status["error_type"] == "RuntimeError"
+    assert len(status["error"]) == 180
+
+
+def test_coordinador_no_ve_pacientes_de_otra_clinica():
+    ss = {
+        "pacientes_db": ["Ana Gomez - 111", "Luis Perez - 222"],
+        "detalles_pacientes_db": {
+            "Ana Gomez - 111": {"dni": "111", "empresa": "Clinica A", "estado": "Activo"},
+            "Luis Perez - 222": {"dni": "222", "empresa": "Clinica B", "estado": "Activo"},
+        },
+    }
+    vis = obtener_pacientes_visibles(ss, "Clinica A", "Coordinador")
+    assert len(vis) == 1
+    assert vis[0][0] == "Ana Gomez - 111"
+
+
+def test_filtrar_registros_empresa_coincide_tildes():
+    items = [{"empresa": "Clínica X", "v": 1}]
+    out = filtrar_registros_empresa(items, "Clinica X", "Medico")
+    assert len(out) == 1
+    assert out[0]["v"] == 1
+
+
+def test_normalizar_usuario_migra_administrativo_a_operativo():
+    u = normalizar_usuario_sistema({"rol": "Administrativo", "perfil_profesional": "Administrativo"})
+    assert u["rol"] == "Operativo"
+
+
+def test_historia_pdf_degrada_bien_sin_reportlab(monkeypatch):
+    monkeypatch.setattr(clinical_exports, "REPORTLAB_DISPONIBLE", False)
+
+    payload = clinical_exports.build_history_pdf_bytes({}, "Paciente Demo", "Clinica Demo")
+
+    assert payload is None
+
+
+def test_auditoria_legal_construye_metadata_trazable():
+    fecha_evento = ARG_TZ.localize(datetime(2026, 4, 12, 9, 45, 30))
+    registro = construir_registro_auditoria_legal(
+        tipo_evento="Medicacion",
+        paciente="Paciente Demo",
+        accion="Registro de administracion",
+        actor="Ana Enfermera",
+        detalle="Dipirona 1 g | Horario: 08:00 | Estado: Realizada",
+        referencia="Dipirona 1 g",
+        empresa="Clinica Demo",
+        usuario={
+            "usuario_login": "ana.enf",
+            "rol": "Enfermeria",
+            "perfil_profesional": "Enfermeria",
+            "empresa": "Clinica Demo",
+        },
+        modulo="Recetas",
+        criticidad="alta",
+        extra={"horario_programado": "08:00"},
+        fecha_evento=fecha_evento,
+    )
+
+    assert registro["modulo"] == "Recetas"
+    assert registro["criticidad"] == "alta"
+    assert registro["actor_login"] == "ana.enf"
+    assert registro["actor_rol"] == "Enfermeria"
+    assert registro["actor_perfil"] == "Enfermeria"
+    assert registro["empresa"] == "Clinica Demo"
+    assert registro["fecha_iso"] == "2026-04-12T09:45:30-03:00"
+    assert registro["horario_programado"] == "08:00"
+    assert registro["audit_id"].startswith("AUD-20260412094530-")
+
+
+def test_modo_celular_viejo_y_valor_liviano():
+    session_state = {"modo_celular_viejo": True}
+
+    assert modo_celular_viejo_activo(session_state) is True
+    assert valor_por_modo_liviano(80, 36, session_state) == 36
+    assert valor_por_modo_liviano(80, 36, {"modo_celular_viejo": False}) == 80
+
+
+def test_validar_archivo_bytes_aplica_limite_pdf_liviano():
+    session_state = {"modo_celular_viejo": True}
+    limite_mb = limite_archivo_mb("pdf", session_state)
+    pdf_grande = b"x" * ((limite_mb * 1024 * 1024) + 1)
+
+    ok, error = validar_archivo_bytes(pdf_grande, tipo="pdf", nombre_archivo="archivo.pdf", session_state=session_state)
+
+    assert ok is False
+    assert str(limite_mb) in error
+
+
+def test_preparar_imagen_clinica_bytes_optimiza_y_devuelve_jpg():
+    img = Image.new("RGB", (1800, 1200), color=(120, 180, 200))
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+
+    preparado = preparar_imagen_clinica_bytes(buf.getvalue(), nombre_archivo="foto.png")
+
+    assert preparado["ok"] is True
+    assert preparado["extension"] == "jpg"
+    assert preparado["mime"] == "image/jpeg"
+    assert preparado["size_bytes"] > 0
+
+
+def test_decodificar_base64_seguro_no_explota_con_payload_invalido():
+    assert decodificar_base64_seguro("esto-no-es-base64") == b""
+
+
+def test_completar_claves_db_session_no_sobrescribe_datos_existentes(monkeypatch):
+    import streamlit as st
+    from core.database import completar_claves_db_session
+
+    fake_state = {"pacientes_db": [{"id": "p1", "nombre": "Demo"}], "u_actual": {"nombre": "x"}}
+    monkeypatch.setattr(st, "session_state", fake_state)
+    completar_claves_db_session()
+    assert fake_state["pacientes_db"] == [{"id": "p1", "nombre": "Demo"}]
+    assert "administracion_med_db" in fake_state
+    assert fake_state["administracion_med_db"] == []
+    assert "auditoria_legal_db" in fake_state
+
+
+def test_completar_claves_db_session_repara_tipos_invalidos(monkeypatch):
+    import streamlit as st
+    from core.database import completar_claves_db_session
+
+    fake_state = {
+        "usuarios_db": None,
+        "pacientes_db": "no-es-lista",
+        "detalles_pacientes_db": [],
+        "u_actual": {"nombre": "x"},
+    }
+    monkeypatch.setattr(st, "session_state", fake_state)
+    completar_claves_db_session()
+    assert isinstance(fake_state["usuarios_db"], dict)
+    assert fake_state["pacientes_db"] == []
+    assert isinstance(fake_state["detalles_pacientes_db"], dict)
+
+
+def test_normalizar_blob_datos():
+    from core.database import _normalizar_blob_datos
+
+    assert _normalizar_blob_datos(None) is None
+    assert _normalizar_blob_datos({"a": 1}) == {"a": 1}
+    assert _normalizar_blob_datos('{"x": 2}') == {"x": 2}
+    assert _normalizar_blob_datos("[]") is None
+    assert _normalizar_blob_datos([1, 2]) is None
+
+
+def test_feature_flags_exportan_claves_esperadas():
+    import core.feature_flags as ff
+
+    assert hasattr(ff, "ALERTAS_APP_PACIENTE_VISIBLE")
+    assert hasattr(ff, "GUARDAR_DATOS_SPINNER_DEFAULT")
+    assert hasattr(ff, "GUARDAR_DATOS_LOG_LENTO_SEGUNDOS")
+    assert hasattr(ff, "MAX_LOGS_DB_ENTRIES")
+
+
+def test_trim_logs_db_for_save_recorta_a_tope(monkeypatch):
+    import streamlit as st
+    import core.feature_flags as ff
+    from core.database import _trim_logs_db_for_save
+
+    max_logs = int(getattr(ff, "MAX_LOGS_DB_ENTRIES", 3000))
+    fake_state = {"logs_db": [{"i": i} for i in range(max_logs + 5)]}
+    monkeypatch.setattr(st, "session_state", fake_state)
+    _trim_logs_db_for_save()
+    assert len(fake_state["logs_db"]) == max_logs
+    assert fake_state["logs_db"][0]["i"] == 5
+
+
+def test_user_feedback_importable():
+    from core.user_feedback import render_modulo_fallo_ui
+
+    assert callable(render_modulo_fallo_ui)
+
+
+def test_db_sql_pacientes_cache_sin_supabase():
+    """Las funciones cacheadas retornan []/None cuando supabase es None."""
+    from core._db_sql_pacientes import (
+        get_pacientes_by_empresa,
+        get_paciente_by_id,
+    )
+    assert get_pacientes_by_empresa("fake_empresa") == []
+    assert get_paciente_by_id("fake_id") is None
+
+
+def test_db_sql_clinico_cache_sin_supabase():
+    """Las funciones cacheadas clínicas retornan [] cuando supabase es None."""
+    from core._db_sql_clinico import (
+        get_indicaciones_paciente,
+        get_indicaciones_activas,
+        get_evoluciones_by_paciente,
+        get_estudios_by_paciente,
+    )
+    assert get_indicaciones_paciente("fake_id") == []
+    assert get_indicaciones_activas("fake_id") == []
+    assert get_evoluciones_by_paciente("fake_id") == []
+    assert get_estudios_by_paciente("fake_id") == []
+
+
+def test_db_sql_operativo_cache_sin_supabase():
+    """Las funciones cacheadas operativas no crashean cuando no hay datos."""
+    from core._db_sql_operativo import (
+        get_administraciones_by_fecha,
+        get_emergencias_by_paciente,
+    )
+    # No deben lanzar excepción (el resultado exacto depende del mock)
+    get_administraciones_by_fecha("fake_id", "2024-01-01", "2024-01-02")
+    get_emergencias_by_paciente("fake_id")
+
+
+def test_cache_clear_methods_exist():
+    """Verifica que los métodos .clear() existen en funciones cacheadas privadas."""
+    from core._db_sql_pacientes import _get_pacientes_by_empresa, _get_pacientes_globales
+    from core._db_sql_clinico import _get_indicaciones_paciente
+    from core._db_sql_operativo import get_administraciones_by_fecha
+
+    for fn in (_get_pacientes_by_empresa, _get_pacientes_globales,
+               _get_indicaciones_paciente):
+        assert hasattr(fn, 'clear'), f"{fn.__name__} debe tener .clear()"
+        fn.clear()
+
+    # get_administraciones_by_fecha es @st.cache_data directo (sin wrapper)
+    assert hasattr(get_administraciones_by_fecha, 'clear')
+    get_administraciones_by_fecha.clear()
+
+
+def test_user_feedback_sin_traceback():
+    """render_modulo_fallo_ui nunca expone traceback al usuario.
+    Verifica que no haya st.code(traceback) ni st.exception() en el código."""
+    from core.user_feedback import render_modulo_fallo_ui
+    import inspect
+    source = inspect.getsource(render_modulo_fallo_ui)
+    assert "st.code(traceback." not in source
+    assert "st.exception(" not in source
+
+
+def test_no_quedan_invalidate_cache_prefix():
+    """Verifica que se eliminó el patrón _invalidate_cache_prefix de _db_sql_*."""
+    import inspect
+    from core._db_sql_pacientes import _clear_pacientes_cache
+    source = inspect.getsource(_clear_pacientes_cache)
+    # Debe usar .clear() en cada función, no session_state.pop
+    assert ".clear()" in source
+    assert "session_state.pop" not in source

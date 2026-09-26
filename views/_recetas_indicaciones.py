@@ -1,0 +1,100 @@
+from __future__ import annotations
+
+"""Lógica de construcción de texto de indicaciones y resumen de medicación activa.
+
+
+
+Extraído de views/recetas.py para mantenerlo bajo las 300 líneas.
+"""
+from datetime import datetime as _dt, timedelta as _td
+
+import streamlit as st
+
+from views._recetas_utils import resumen_plan_hidratacion, texto_indicacion_visible, valor_ml_h_legible
+
+
+def construir_texto_indicacion(
+    tipo_indicacion,
+    med_final="",
+    via="",
+    frecuencia="",
+    dias=None,
+    solucion="",
+    volumen_ml=None,
+    velocidad_ml_h=None,
+    alternar_con="",
+    detalle_infusion="",
+    plan_hidratacion=None,
+):
+    if tipo_indicacion == "Infusion / hidratacion":
+        partes = []
+        velocidad_legible = valor_ml_h_legible(velocidad_ml_h)
+        titulo = solucion.strip() or "Infusion endovenosa"
+        if volumen_ml:
+            titulo = f"{titulo} {int(volumen_ml)} ml"
+        if velocidad_legible:
+            partes.append(f"Velocidad: {velocidad_legible} ml/h")
+        partes.append(titulo)
+        if via:
+            partes.append(f"Via: {via}")
+        if alternar_con:
+            partes.append(f"Alternar con: {alternar_con}")
+        if dias:
+            partes.append(f"Durante {dias} dias")
+        if plan_hidratacion:
+            resumen = resumen_plan_hidratacion(plan_hidratacion)
+            if resumen:
+                partes.append(f"Plan: {resumen}")
+        if detalle_infusion:
+            partes.append(f"Indicacion: {detalle_infusion.strip()}")
+        return " | ".join([p for p in partes if str(p).strip()])
+
+    texto_base = med_final.strip().title()
+    partes = [texto_base]
+    if via:
+        partes.append(f"Via: {via}")
+    if frecuencia:
+        partes.append(frecuencia)
+    if dias:
+        partes.append(f"Durante {dias} dias")
+    return " | ".join([p for p in partes if str(p).strip()])
+
+
+def resumen_medicacion_activa(activas: list):
+    """Bloque compacto de medicación activa con indicador de próximas a vencer.
+    Recibe directamente la lista ya filtrada (solo Activas, sin Completadas/Suspendidas).
+    """
+    if not activas:
+        return
+
+    hoy = _dt.now().date()
+    por_vencer = []
+    for r in activas:
+        try:
+            fecha_inicio = _dt.strptime(str(r.get("fecha", ""))[:10], "%d/%m/%Y").date()
+            dias_dur = int(r.get("dias_duracion", 0) or 0)
+            if dias_dur > 0:
+                fecha_fin = fecha_inicio + _td(days=dias_dur)
+                dias_restantes = (fecha_fin - hoy).days
+                if 0 <= dias_restantes <= 2:
+                    por_vencer.append((r, dias_restantes))
+        except Exception as _exc:
+            from core.app_logging import log_event
+            log_event("recetas_indicaciones", f"parse_fecha_vencimiento_error:{type(_exc).__name__}:{r.get('fecha','')}")
+
+    with st.expander(f"📊 Medicación activa ({len(activas)} indicación/es)", expanded=bool(por_vencer)):
+        if por_vencer:
+            for r, dias in por_vencer:
+                nom = (r.get("med") or "")[:60]
+                label = "hoy" if dias == 0 else f"en {dias}d"
+                st.warning(f"🟡 Vence {label}: **{nom}**")
+
+        cols = st.columns([3, 2])
+        cols[0].caption("**Medicación**")
+        cols[1].caption("**Frecuencia / Médico / Días**")
+        for r in activas[:12]:
+            cols = st.columns([3, 2])
+            cols[0].write(texto_indicacion_visible(r))
+            cols[1].write(f"{r.get('frecuencia') or r.get('via') or '—'} | {(r.get('medico_nombre') or r.get('profesional_estado') or '—')[:24]} | {str(r.get('dias_duracion') or '—')}")
+        if len(activas) > 12:
+            st.caption(f"... y {len(activas) - 12} más.")

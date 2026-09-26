@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medicare-pro-v2"
+version = "0.1.0"
+description = "MediCare Enterprise PRO Streamlit application"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["core*", "views*", "features*", "services*", "components*", "api*", "config*", "scripts*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+norecursedirs = [".git", ".venv", "venv", "env", "__pycache__", ".pytest_cache"]
+filterwarnings = [
+    "ignore::pytest.PytestUnknownMarkWarning",
+]
+addopts = ["--import-mode=importlib"]

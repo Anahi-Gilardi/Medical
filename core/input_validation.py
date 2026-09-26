@@ -1,0 +1,92 @@
+"""Validaciones de entrada reutilizables (formato email, etc.)."""
+
+from __future__ import annotations
+
+import re
+
+# Local-part y dominio razonables; no pretende cubrir el RFC completo.
+_EMAIL_RE = re.compile(
+    r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$"
+)
+
+
+def email_formato_aceptable(valor: str) -> bool:
+    s = (valor or "").strip()
+    if len(s) < 5 or len(s) > 254 or "@" not in s:
+        return False
+    return bool(_EMAIL_RE.match(s))
+
+
+def validar_dni(dni: str) -> bool:
+    """Valida que el DNI sea numérico y tenga al menos 7 dígitos."""
+    s = (dni or "").strip()
+    return s.isdigit() and len(s) >= 7
+
+
+def validar_telefono(telefono: str) -> bool:
+    """Valida formato básico de teléfono (7+ dígitos, permite +, espacios, guiones)."""
+    s = (telefono or "").strip()
+    if len(s) < 7:
+        return False
+    # Permite +, espacios, guiones, paréntesis, dígitos
+    return bool(re.match(r"^[\d\s\+\-\(\)]+$", s))
+
+
+def validar_email(email: str) -> bool:
+    """Alias público de email_formato_aceptable para tests."""
+    return email_formato_aceptable(email)
+
+
+def sanitizar_html(texto: str) -> str:
+    """Escapa caracteres HTML para prevenir XSS."""
+    if not texto:
+        return ""
+    replacements = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#x27;",
+        "/": "&#x2F;",
+    }
+    for char, entity in replacements.items():
+        texto = texto.replace(char, entity)
+    return texto
+
+
+def validar_longitud_maxima(texto: str, max_len: int = 10000) -> bool:
+    """Verifica que el texto no exceda la longitud máxima."""
+    return len(str(texto or "")) <= max_len
+
+
+def sanitizar_sql(texto: str) -> str:
+    """Previene inyección SQL (defensa en profundidad — usar siempre queries parametrizados)."""
+    if not texto:
+        return ""
+    result = str(texto)
+    for ch in ("'", '"', ";", "--", "/*", "*/"):
+        result = result.replace(ch, "")
+    return result.strip()
+
+
+def validar_dni_seguro(dni: str) -> bool:
+    """Valida DNI de forma segura (7-8 dígitos, rango 7M-99M)."""
+    s = (dni or "").strip()
+    if not s.isdigit():
+        return False
+    if len(s) < 7 or len(s) > 8:
+        return False
+    try:
+        val = int(s)
+        return 7000000 <= val <= 99999999
+    except (ValueError, TypeError):
+        return False
+
+
+def validar_monto(monto: float, maximo: float = 500000.0) -> bool:
+    """Valida que el monto esté en rango seguro."""
+    try:
+        m = float(monto)
+        return 0 <= m <= maximo
+    except (ValueError, TypeError):
+        return False

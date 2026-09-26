@@ -1,0 +1,268 @@
+"""Operaciones SQL sobre pacientes y empresas. Extraido de core/db_sql.py."""
+
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
+import streamlit as st
+
+from core.app_logging import log_event
+from core.empresa_config import empresa_record_configurado
+from core._db_retry import supabase_execute_with_retry
+
+PACIENTES_LIST_COLUMNS = (
+    "id,empresa_id,nombre_completo,dni,fecha_nacimiento,sexo,estado,"
+    "obra_social,telefono,direccion,alergias,patologias,updated_at,created_at"
+)
+EMPRESAS_MIN_COLUMNS = "id,nombre"
+
+try:
+    from core.database import supabase
+except ImportError:
+    supabase = None
+
+
+def check_supabase_connection() -> bool:
+    ok = supabase is not None
+    if not ok and not st.session_state.get("_db_conn_error_shown"):
+        st.session_state["_db_conn_error_shown"] = True
+        log_event("db_sql", "error:Supabase en check_supabase_connection: cliente no inicializado. Datos desde cache local.")
+    return ok
+
+
+def nombre_paciente_sql(row: Dict[str, Any]) -> str:
+    """Normaliza nombres entre esquemas nuevos y legados."""
+    if not isinstance(row, dict):
+        return ""
+    nombre_completo = str(row.get("nombre_completo", "") or "").strip()
+    if nombre_completo:
+        return nombre_completo
+    partes = [
+        str(row.get("nombre", "") or "").strip(),
+        str(row.get("apellido", "") or "").strip(),
+    ]
+    return " ".join(p for p in partes if p).strip()
+
+
+def _build_pacientes_query(
+    empresa_id: str,
+    busqueda: str,
+    incluir_altas: bool,
+    columns: str,
+    legacy: bool,
+    order_by: str | None,
+    limit: int = 100,
+):
+    query = supabase.table("pacientes").select(columns).eq("empresa_id", empresa_id)
+    if not incluir_altas:
+        query = query.eq("estado", "Activo")
+    if busqueda:
+        busqueda_limpia = busqueda.strip()
+        if legacy:
+            query = query.or_(
+                f"nombre.ilike.%{busqueda_limpia}%,apellido.ilike.%{busqueda_limpia}%,dni.ilike.%{busqueda_limpia}%"
+            )
+        else:
+            query = query.or_(f"nombre_completo.ilike.%{busqueda_limpia}%,dni.ilike.%{busqueda_limpia}%")
+    if order_by:
+        query = query.order(order_by, desc=True)
+    return query.limit(limit)
+
+
+def _clear_pacientes_cache() -> None:
+    _get_pacientes_by_empresa.clear()
+    _get_pacientes_globales.clear()
+    _get_paciente_by_id.clear()
+    _get_empresa_by_nombre.clear()
+    _get_paciente_by_dni_empresa.clear()
+
+
+def get_pacientes_by_empresa(empresa_id: str, busqueda: str = "", incluir_altas: bool = False) -> List[Dict[str, Any]]:
+    if not check_supabase_connection():
+        return []
+    return _get_pacientes_by_empresa(empresa_id, busqueda, incluir_altas)
+
+
+@st.cache_data(ttl=300, max_entries=500, show_spinner=False)
+def _get_pacientes_by_empresa(empresa_id: str, busqueda: str = "", incluir_altas: bool = False) -> List[Dict[str, Any]]:
+    attempts = (
+        (PACIENTES_LIST_COLUMNS, False, "updated_at"),
+        (PACIENTES_LIST_COLUMNS, True, "created_at"),
+        (PACIENTES_LIST_COLUMNS, True, None),
+    )
+    for columns, legacy, order_by in attempts:
+        try:
+            response = supabase_execute_with_retry(
+                "get_pacientes",
+                lambda c=columns, l=legacy, o=order_by: _build_pacientes_query(
+                    empresa_id, busqueda, incluir_altas, c, l, o
+                ).execute(),
+            )
+            return getattr(response, "data", None) or []
+        except Exception as e:
+            log_event("db_sql", f"error_get_pacientes:{type(e).__name__}")
+    return []
+
+
+def get_pacientes_globales(limit: int = 1000) -> List[Dict[str, Any]]:
+    if not check_supabase_connection():
+        return []
+    return _get_pacientes_globales(limit)
+
+
+@st.cache_data(ttl=300, max_entries=200, show_spinner=False)
+def _get_pacientes_globales(limit: int = 1000) -> List[Dict[str, Any]]:
+    limit = max(1, min(int(limit or 1000), 2000))
+    attempts = (
+        (PACIENTES_LIST_COLUMNS, "updated_at"),
+        (PACIENTES_LIST_COLUMNS, "created_at"),
+        (PACIENTES_LIST_COLUMNS, None),
+    )
+    for columns, order_by in attempts:
+        try:
+            def _query(c=columns, o=order_by):
+                q = supabase.table("pacientes").select(c)
+                if o:
+                    q = q.order(o, desc=True)
+                return q.limit(limit).execute()
+            response = supabase_execute_with_retry("get_pacientes_globales", _query)
+            return getattr(response, "data", None) or []
+        except Exception as e:
+            log_event("db_sql", f"error_get_pacientes_globales:{type(e).__name__}")
+    return []
+
+
+def get_paciente_by_id(paciente_id: str) -> Optional[Dict[str, Any]]:
+    if not check_supabase_connection():
+        return None
+    return _get_paciente_by_id(paciente_id)
+
+
+@st.cache_data(ttl=120, max_entries=500, show_spinner=False)
+def _get_paciente_by_id(paciente_id: str) -> Optional[Dict[str, Any]]:
+    try:
+        response = supabase_execute_with_retry(
+            "get_paciente_id",
+            lambda: supabase.table("pacientes").select(PACIENTES_LIST_COLUMNS).eq("id", paciente_id).limit(1).execute(),
+        )
+        return (getattr(response, "data", None) or [None])[0]
+    except Exception as e:
+        log_event("db_sql", f"error_get_paciente_id:{type(e).__name__}")
+        return None
+
+
+def get_empresa_by_nombre(nombre_empresa: str) -> Optional[Dict[str, Any]]:
+    if not check_supabase_connection():
+        return empresa_record_configurado(nombre_empresa)
+    return _get_empresa_by_nombre(nombre_empresa)
+
+
+@st.cache_data(ttl=3600, max_entries=100, show_spinner=False)
+def _get_empresa_by_nombre(nombre_empresa: str) -> Optional[Dict[str, Any]]:
+    empresa_fallback = empresa_record_configurado(nombre_empresa)
+    try:
+        response = supabase_execute_with_retry(
+            "get_empresa_nombre",
+            lambda: supabase.table("empresas").select(EMPRESAS_MIN_COLUMNS).eq("nombre", nombre_empresa).limit(1).execute(),
+        )
+        return (getattr(response, "data", None) or [empresa_fallback])[0]
+    except Exception as e:
+        log_event("db_sql", f"error_get_empresa_nombre:{type(e).__name__}")
+        st.warning("Error al cargar datos de la empresa desde el servidor. Se usarán datos locales.")
+        return empresa_fallback
+
+
+def get_paciente_by_dni_empresa(empresa_id: str, dni: str) -> Optional[Dict[str, Any]]:
+    if not check_supabase_connection() or not empresa_id or not dni:
+        return None
+    return _get_paciente_by_dni_empresa(empresa_id, dni)
+
+
+@st.cache_data(ttl=120, max_entries=500, show_spinner=False)
+def _get_paciente_by_dni_empresa(empresa_id: str, dni: str) -> Optional[Dict[str, Any]]:
+    try:
+        response = supabase_execute_with_retry(
+            "get_paciente_dni_empresa",
+            lambda: supabase.table("pacientes").select(PACIENTES_LIST_COLUMNS).eq("empresa_id", empresa_id).eq("dni", dni).limit(1).execute(),
+        )
+        return (getattr(response, "data", None) or [None])[0]
+    except Exception as e:
+        log_event("db_sql", f"error_get_paciente_dni_empresa:{type(e).__name__}")
+        return None
+
+
+def _upsert_paciente_payload(payload: Dict[str, Any]):
+    return supabase_execute_with_retry(
+        "upsert_paciente",
+        lambda: supabase.table("pacientes").upsert(payload).execute(),
+    )
+
+
+def upsert_paciente(datos_paciente: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Inserta o actualiza un paciente."""
+    if not check_supabase_connection():
+        return None
+    payload = dict(datos_paciente or {})
+    try:
+        if "id" in payload:
+            from core.utils import ahora
+
+            payload["updated_at"] = ahora().isoformat()
+        try:
+            response = _upsert_paciente_payload(payload)
+        except Exception:
+            if "updated_at" not in payload:
+                raise
+            payload.pop("updated_at", None)
+            response = _upsert_paciente_payload(payload)
+        _clear_pacientes_cache()
+        return response.data[0] if response and response.data else None
+    except Exception as e:
+        log_event("db_sql", f"error_upsert_paciente:{type(e).__name__}")
+        return None
+
+
+def update_paciente_by_id(paciente_id: str, datos_update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Actualiza un paciente existente por id."""
+    if not check_supabase_connection() or not paciente_id:
+        return None
+    try:
+        payload = dict(datos_update or {})
+        if not payload:
+            return None
+        from core.utils import ahora
+
+        payload["updated_at"] = ahora().isoformat()
+        try:
+            response = supabase_execute_with_retry(
+                "update_paciente",
+                lambda: supabase.table("pacientes").update(payload).eq("id", paciente_id).execute(),
+            )
+        except Exception:
+            payload.pop("updated_at", None)
+            response = supabase_execute_with_retry(
+                "update_paciente",
+                lambda: supabase.table("pacientes").update(payload).eq("id", paciente_id).execute(),
+            )
+        _clear_pacientes_cache()
+        return response.data[0] if response and response.data else None
+    except Exception as e:
+        log_event("db_sql", f"error_update_paciente:{type(e).__name__}")
+        return None
+
+
+def delete_paciente_by_id(paciente_id: str) -> bool:
+    """Elimina un paciente por id."""
+    if not check_supabase_connection() or not paciente_id:
+        return False
+    try:
+        supabase_execute_with_retry(
+            "delete_paciente",
+            lambda: supabase.table("pacientes").delete().eq("id", paciente_id).execute(),
+        )
+        _clear_pacientes_cache()
+        return True
+    except Exception as e:
+        log_event("db_sql", f"error_delete_paciente:{type(e).__name__}")
+        return False

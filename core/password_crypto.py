@@ -1,0 +1,190 @@
+"""
+Hash y verificación de contraseñas (bcrypt).
+
+- Si el usuario tiene `pass_hash`, solo se valida contra el hash.
+- Si solo tiene `pass` en texto plano (datos viejos), se acepta el match y se puede migrar a hash.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import secrets
+from typing import Optional, Tuple
+
+from core.app_logging import log_event
+
+try:
+    import bcrypt
+except ImportError:
+    bcrypt = None  # type: ignore
+
+BCRYPT_PREFIXES = ("$2a$", "$2b$", "$2y$")
+
+
+def hashing_disponible() -> bool:
+    return bcrypt is not None
+
+
+def _setting_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    try:
+        import streamlit as st
+
+        candidate = st.secrets.get(name, None)
+        if isinstance(candidate, (bool, int, str)):
+            raw = candidate
+    except Exception:
+        pass
+    if raw is None:
+        return default
+    if isinstance(raw, bool):
+        return raw
+    return str(raw).strip().lower() in {"1", "true", "yes", "si", "on"}
+
+
+def legacy_password_login_enabled() -> bool:
+    """Permite login con `pass` en claro solo durante migracion controlada.
+
+    En produccion queda deshabilitado por defecto. Para una ventana de migracion
+    acotada se puede activar `ALLOW_LEGACY_PLAINTEXT_PASSWORD_LOGIN=true`.
+    """
+    env = os.getenv("MEDICARE_ENV", "development").strip().lower()
+    default = env not in {"production", "prod"}
+    return _setting_bool("ALLOW_LEGACY_PLAINTEXT_PASSWORD_LOGIN", default)
+
+
+def bcrypt_rounds_config() -> int:
+    try:
+        import streamlit as st
+
+        r = int(st.secrets.get("PASSWORD_BCRYPT_ROUNDS", 12))
+        return max(12, min(15, r))
+    except Exception:
+        return 12
+
+
+def parece_hash_bcrypt(valor: str) -> bool:
+    s = (valor or "").strip()
+    return s.startswith(BCRYPT_PREFIXES)
+
+
+def hash_password(plain: str, rounds: int = 12) -> str:
+    if not bcrypt:
+        raise RuntimeError("bcrypt no instalado")
+    p = (plain or "").encode("utf-8")
+    if len(p) > 72:
+        p = p[:72]
+    return bcrypt.hashpw(p, bcrypt.gensalt(rounds=rounds)).decode("ascii")
+
+
+def verificar_password(plain_or_hash1: str, plain_or_hash2: str) -> bool:
+    """Acepta hash bcrypt o texto plano legacy (comparación constante en tiempo).
+    Detecta automáticamente cuál argumento es el hash bcrypt."""
+    a = (plain_or_hash1 or "").strip()
+    b = (plain_or_hash2 or "").strip()
+    if not a or not b:
+        return False
+    a_hash = parece_hash_bcrypt(a)
+    b_hash = parece_hash_bcrypt(b)
+    if a_hash and not b_hash:
+        if not bcrypt:
+            return False
+        try:
+            return bcrypt.checkpw(b.encode("utf-8"), a.encode("ascii"))
+        except Exception as e:
+            log_event("password_crypto", f"error_checkpw_a:{type(e).__name__}:{e}")
+            return False
+    if b_hash and not a_hash:
+        if not bcrypt:
+            return False
+        try:
+            return bcrypt.checkpw(a.encode("utf-8"), b.encode("ascii"))
+        except Exception as e:
+            log_event("password_crypto", f"error_checkpw_b:{type(e).__name__}:{e}")
+            return False
+    # Ninguno parece hash: comparación legacy en texto plano
+    return secrets.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
+
+
+def password_usuario_coincide(user_dict: dict, plain: str) -> Tuple[bool, bool]:
+    """
+    Devuelve (coincide, migrar_a_hash).
+
+    migrar_a_hash=True si hubo match por `pass` en claro y conviene guardar `pass_hash`.
+    """
+    ph = user_dict.get("pass_hash")
+    if ph is not None and str(ph).strip():
+        return verificar_password(plain, str(ph).strip()), False
+    if not legacy_password_login_enabled():
+        return False, False
+    legacy = user_dict.get("pass", "")
+    if verificar_password(plain, str(legacy)):
+        return True, bool(hashing_disponible())
+    return False, False
+
+
+def aplicar_hash_tras_login_ok(user_dict: dict, plain: str, rounds: int = 12) -> None:
+    """Reemplaza almacenamiento en claro por hash; deja `pass` vacío."""
+    if not hashing_disponible():
+        return
+    user_dict["pass_hash"] = hash_password(plain, rounds=rounds)
+    user_dict["pass"] = ""
+
+
+def password_min_length() -> int:
+    """Largo mínimo para contraseñas nuevas o recuperadas (secrets PASSWORD_MIN_LENGTH, default 8, rango 4–128)."""
+    try:
+        import streamlit as st
+
+        n = int(st.secrets.get("PASSWORD_MIN_LENGTH", 8))
+    except Exception:
+        n = 8
+    return max(4, min(128, n))
+
+
+def password_exigir_letra_y_numero() -> bool:
+    try:
+        import streamlit as st
+
+        v = st.secrets.get("PASSWORD_REQUIRE_LETTER_AND_DIGIT", False)
+        if isinstance(v, bool):
+            return v
+        return str(v).strip().lower() in ("1", "true", "yes", "si", "on")
+    except Exception:
+        return False
+
+
+def mensaje_password_no_cumple_politica(plain: str) -> Optional[str]:
+    """
+    None si cumple política; si no, mensaje corto en español.
+    """
+    p = plain or ""
+    mn = password_min_length()
+    if len(p) < mn:
+        return f"La contraseña debe tener al menos {mn} caracteres."
+    if len(p) > 128:
+        return "La contraseña no puede superar 128 caracteres."
+    if password_exigir_letra_y_numero():
+        if not re.search(r"[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]", p):
+            return "La contraseña debe incluir al menos una letra."
+        if not re.search(r"\d", p):
+            return "La contraseña debe incluir al menos un número."
+    return None
+
+
+def texto_ayuda_politica_password_breve() -> str:
+    """Texto corto para UI (login / recuperación) según secrets."""
+    mn = password_min_length()
+    partes = [f"al menos {mn} caracteres"]
+    if password_exigir_letra_y_numero():
+        partes.append("una letra y un número")
+    return "La contraseña debe tener " + " y ".join(partes) + "."
+
+
+def establecer_password_nuevo(user_dict: dict, plain: str, rounds: int = 12) -> None:
+    """Recuperacion de contrasena u alta: nunca persiste texto plano."""
+    if not hashing_disponible():
+        raise RuntimeError("bcrypt no instalado: no se puede guardar una contrasena de forma segura")
+    user_dict["pass_hash"] = hash_password(plain, rounds=rounds)
+    user_dict["pass"] = ""
